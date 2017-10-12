@@ -1,96 +1,162 @@
 #!/usr/bin/python
+# -*- encoding: utf-8 -*-
 
 import time
-import datetime
+from datetime import datetime
 import argparse
-import netaddr
+import urllib2
 import sys
-import logging
+import os
 from scapy.all import *
-from pprint import pprint
-from logging.handlers import RotatingFileHandler
+import sqlite3
+import netaddr
 
+from socket import error as SocketError
+import errno
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
+VERSION = '0.2'
+ 
+ # list of mac address to ignore or use -I switch
+MYDEVICES = ('xx:xx:xx:xx:xx:xx',
+)
+IGNORED = MYDEVICES
 
-DEBUG = False
+def insert_into_db(fields, db):
+    date, mac, vendor, ssid, rssi = fields
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
 
-def build_packet_callback(time_fmt, logger, delimiter, mac_info, ssid, rssi):
-	def packet_callback(packet):
-		
-		if not packet.haslayer(Dot11):
-			return
+    c.execute('select id from vendor where name=?', (vendor,))
+    row = c.fetchone()
+    if row is None:
+        c.execute('insert into vendor (name) values(?)', (vendor,))
+        c.execute('select id from vendor where name=?', (vendor,))
+        row = c.fetchone()
+    vendor_id = row[0]
 
-		# we are looking for management frames with a probe subtype
-		# if neither match we are done here
-		if packet.type != 0 or packet.subtype != 0x04:
-			return
+    c.execute('select id from mac where address=?', (mac,))
+    row = c.fetchone()
+    if row is None:
+        c.execute('insert into mac (address,vendor) values(?, ?)', (mac, vendor_id))
+        c.execute('select id from mac where address=?', (mac,))
+        row = c.fetchone()
+    mac_id = row[0]
 
-		# list of output fields
-		fields = []
+    c.execute('select id from ssid where name=?', (ssid,))
+    row = c.fetchone()
+    if row is None:
+        c.execute('insert into ssid (name) values(?)', (ssid,))
+        c.execute('select id from ssid where name=?', (ssid,))
+        row = c.fetchone()
+    ssid_id = row[0]
 
-		# determine preferred time format 
-		log_time = str(int(time.time()))
-		if time_fmt == 'iso':
-			log_time = datetime.datetime.now().isoformat()
+    c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
 
-		fields.append(log_time)
+    conn.commit()
+    conn.close()
 
-		# append the mac address itself
-		fields.append(packet.addr2)
+def build_packet_cb(network, db, stdout):
+    def packet_callback(packet):
+        if not packet.haslayer(Dot11):
+            return
 
-		# parse mac address and look up the organization from the vendor octets
-		if mac_info:
-			try:
-				parsed_mac = netaddr.EUI(packet.addr2)
-				fields.append(parsed_mac.oui.registration().org)
-			except netaddr.core.NotRegisteredError, e:
-				fields.append('UNKNOWN')
+        # we are looking for management frames with a probe subtype
+        # if neither match we are done here
+        if packet.type != 0 or packet.subtype != 0x04:
+            return
 
-		# include the SSID in the probe frame
-		if ssid:
-			fields.append(packet.info)
-			
-		if rssi:
-			rssi_val = -(256-ord(packet.notdecoded[-4:-3]))
-			fields.append(str(rssi_val))
+        # list of output fields
+        fields = []
 
-		logger.info(delimiter.join(fields))
+        # determine preferred time format
+        log_time = time.time()
+        fields.append(log_time)
 
-	return packet_callback
+        # append the mac address itself
+        fields.append(packet.addr2)
+
+        # parse mac address and look up the organization from the vendor octets
+        if network:
+            try:
+                r = urllib2.urlopen('https://api.macvendors.com/%s' % packet.addr2)
+                fields.append(r.read())
+                r.close()
+            except SocketError as e:
+                if e.errno != errno.ECONNRESET:
+                    raise # Not error we are looking for
+                fields.append('UNKNOWN')
+            except urllib2.HTTPError:
+                fields.append('UNKNOWN')
+            except urllib2.URLError:
+                print 'URLError: %s' % packet.addr2
+                fields.append('UNKNOWN')
+        else:
+            try:
+                parsed_mac = netaddr.EUI(packet.addr2)
+                fields.append(parsed_mac.oui.registration().org)
+            except netaddr.core.NotRegisteredError, e:
+                fields.append('UNKNOWN')
+
+        # include the SSID in the probe frame
+        fields.append(packet.info)
+
+        rssi_val = -(256-ord(packet.notdecoded[-2:-1]))
+        fields.append(rssi_val)
+
+        if packet.addr2 not in IGNORED:
+            insert_into_db(fields, db)
+
+            if stdout:
+                # convert time to iso
+                fields[0] = str(datetime.fromtimestamp(fields[0]))[:-3].replace(' ','T')
+                print '\t'.join(str(i) for i in fields)
+
+    return packet_callback
 
 def main():
-	parser = argparse.ArgumentParser(description=DESCRIPTION)
-	parser.add_argument('-i', '--interface', help="capture interface")
-	parser.add_argument('-t', '--time', default='iso', help="output time format (unix, iso)")
-	parser.add_argument('-o', '--output', default='probemon.log', help="logging output location")
-	parser.add_argument('-b', '--max-bytes', default=5000000, help="maximum log size in bytes before rotating")
-	parser.add_argument('-c', '--max-backups', default=99999, help="maximum number of log files to keep")
-	parser.add_argument('-d', '--delimiter', default='\t', help="output field delimiter")
-	parser.add_argument('-f', '--mac-info', action='store_true', help="include MAC address manufacturer")
-	parser.add_argument('-s', '--ssid', action='store_true', help="include probe SSID in output")
-	parser.add_argument('-r', '--rssi', action='store_true', help="include rssi in output")
-	parser.add_argument('-D', '--debug', action='store_true', help="enable debug output")
-	parser.add_argument('-l', '--log', action='store_true', help="enable scrolling live view of the logfile")
-	args = parser.parse_args()
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument('-c', '--channel', default=1, type=int, help="the channel to listen on")
+    parser.add_argument('-d', '--db', default='probemon.db', help="database file name to use")
+    parser.add_argument('-i', '--interface', required=True, help="the capture interface to use")
+    parser.add_argument('-I', '--ignore', store='append', help="mac address to ignore")
+    parser.add_argument('-n', '--network', action='store_true', default=False, help="to use the network to look up for mac address vendor")
+    parser.add_argument('-s', '--stdout', action='store_true', default=False, help="also log probe request to stdout")
+    args = parser.parse_args()
 
-	if not args.interface:
-		print "error: capture interface not given, try --help"
-		sys.exit(-1)
-	
-	DEBUG = args.debug
+    if args.ignore is not None:
+        IGNORED = args.ignore
 
-	# setup our rotating logger
-	logger = logging.getLogger(NAME)
-	logger.setLevel(logging.INFO)
-	handler = RotatingFileHandler(args.output, maxBytes=args.max_bytes, backupCount=args.max_backups)
-	logger.addHandler(handler)
-	if args.log:
-		logger.addHandler(logging.StreamHandler(sys.stdout))
-	built_packet_cb = build_packet_callback(args.time, logger, 
-		args.delimiter, args.mac_info, args.ssid, args.rssi)
-	sniff(iface=args.interface, prn=built_packet_cb, store=0)
+    conn = sqlite3.connect(args.db)
+    c = conn.cursor()
+    # create tables if they do not exists
+    sql = 'create table if not exists vendor(id integer not null primary key, name text)'
+    c.execute(sql)
+    sql = '''create table if not exists mac(id integer not null primary key, address text,
+        vendor integer,
+        foreign key(vendor) references vendor(id)
+        )'''
+    c.execute(sql)
+    sql = 'create table if not exists ssid(id integer not null primary key, name text)'
+    c.execute(sql)
+    sql = '''create table if not exists probemon(date float,
+        mac integer,
+        ssid integer,
+        rssi integer,
+        foreign key(mac) references mac(id),
+        foreign key(ssid) references ssid(id)
+        )'''
+    c.execute(sql)
+    conn.commit()
+    conn.close()
+
+    # sniff on specified channel
+    os.system("iwconfig %s channel %d >/dev/null 2>&1" % (args.interface, args.channel))
+
+    sniff(iface=args.interface, prn=build_packet_cb(args.network, args.db, args.stdout), store=0)
 
 if __name__ == '__main__':
-	main()
+    main()
+
+# vim: set et ts=4 sw=4:
