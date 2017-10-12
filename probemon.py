@@ -17,7 +17,7 @@ import errno
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 VERSION = '0.2'
- 
+
  # list of mac address to ignore or use -I switch
 MYDEVICES = ('xx:xx:xx:xx:xx:xx',
 )
@@ -120,7 +120,7 @@ def main():
     parser.add_argument('-c', '--channel', default=1, type=int, help="the channel to listen on")
     parser.add_argument('-d', '--db', default='probemon.db', help="database file name to use")
     parser.add_argument('-i', '--interface', required=True, help="the capture interface to use")
-    parser.add_argument('-I', '--ignore', store='append', help="mac address to ignore")
+    parser.add_argument('-I', '--ignore', action='append', help="mac address to ignore")
     parser.add_argument('-n', '--network', action='store_true', default=False, help="to use the network to look up for mac address vendor")
     parser.add_argument('-s', '--stdout', action='store_true', default=False, help="also log probe request to stdout")
     args = parser.parse_args()
