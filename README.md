@@ -55,12 +55,14 @@ optional arguments:
 ```
 * -d/--days specify the number of days that will lapse the chart from 12AM to 12AM.
 * -k/--knowmac (can be repeated) to specify known mac address that will be colored in red.
-* -p/--privacy switch merge all Locally Administered Addresses (MAC) into a single plot. Whether this optin is used or not, they are colored in grey.
+* -p/--privacy switch merge all Locally Administered Addresses (MAC) into a single plot. Whether this option is used or not, they are colored in grey.
 * -m/--min allows to specify the minimum of probe requests that are needed to be displayed on the chart.
 * -r/--rssi allows to filter probe resquest based the the RSSI value
-* -s/--start alows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
+* -s/--start allows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
 
 ![Image of chart plotted with plot.py](example.png)
+When displayed by the script, one can hover the mouse on the plot to get the mac address, and the timestamp.
+When you export to an image, you lose that feature but you can add a legend instead.
 
 ### stats script
 It allows you to request the database about a specific mac address and get statistics about it,
