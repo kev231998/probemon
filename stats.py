@@ -107,6 +107,7 @@ def main():
     c.execute(sql, sql_args)
 
     if args.log:
+        # simply output each log entry to stdout
         for row in c.fetchall():
             t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(row[0]))
             print '\t'.join([t, row[1], row[2], row[3], str(row[4])])
@@ -114,10 +115,12 @@ def main():
         conn.close()
         return
 
+    # gather stats about each mac
     macs = {}
     for row in c.fetchall():
         mac = row[1]
         if is_local_bit_set(mac):
+            # create virtual mac for LAA mac address
             mac = 'LAA'
         if mac not in macs:
             macs[mac] = {'vendor': row[2], 'ssid': [], 'rssi': [], 'last': row[0], 'first':row[0]}
@@ -132,10 +135,11 @@ def main():
 
     conn.close()
 
-    # sort on frequency
+    # sort on frequency of appearence of a mac
     tmp = [(k,len(v['rssi'])) for k,v in macs.items()]
     tmp = reversed(sorted(tmp, key=lambda k:k[1]))
 
+    # print our stats
     for k,_ in tmp:
         v = macs[k]
         print 'MAC: %s, VENDOR: %s, SSIDs: %s' % (k, v['vendor'].decode('utf-8'), ','.join(v['ssid']))
