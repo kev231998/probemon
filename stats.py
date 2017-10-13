@@ -152,7 +152,8 @@ def main():
     # print our stats
     for k,_ in tmp:
         v = macs[k]
-        print 'MAC: %s, VENDOR: %s, SSIDs: %s' % (k, v['vendor'].decode('utf-8'), ','.join(sorted(v['ssid'])))
+        laa = ' (LAA)' if is_local_bit_set(k) else ''
+        print 'MAC: %s%s, VENDOR: %s, SSIDs: %s' % (k, laa, v['vendor'].decode('utf-8'), ','.join(sorted(v['ssid'])))
         rssi = v['rssi']
         if rssi != []:
             print '\tRSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
