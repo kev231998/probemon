@@ -60,9 +60,6 @@ def insert_into_db(fields, db):
 
 def build_packet_cb(network, db, stdout):
     def packet_callback(packet):
-        if not packet.haslayer(Dot11ProbeReq):
-            return
-
         # list of output fields
         fields = []
         fields.append(time.time())
@@ -144,7 +141,8 @@ def main():
     # sniff on specified channel
     os.system("iwconfig %s channel %d >/dev/null 2>&1" % (args.interface, args.channel))
 
-    sniff(iface=args.interface, prn=build_packet_cb(args.network, args.db, args.stdout), store=0)
+    sniff(iface=args.interface, prn=build_packet_cb(args.network, args.db, args.stdout),
+        store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
 
 if __name__ == '__main__':
     main()
