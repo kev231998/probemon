@@ -46,7 +46,7 @@ def parse_ts(ts):
             sys.exit(-1)
     return t
 
-def build_sql_query(after, before, mac, rssi, day):
+def build_sql_query(after, before, mac, rssi, zero, day):
     sql_head = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
     inner join mac on mac.id=probemon.mac
     inner join vendor on vendor.id=mac.vendor
@@ -56,13 +56,13 @@ def build_sql_query(after, before, mac, rssi, day):
     if mac:
         if len(mac) != 17:
             mac = '%s%%' % mac
-        sql_where_clause = 'where mac.address like ? and rssi !=0'
+        sql_where_clause = 'where mac.address like ?'
         sql_args = [mac]
     elif rssi:
-        sql_where_clause = 'where rssi>? and rssi !=0'
+        sql_where_clause = 'where rssi>?'
         sql_args = [rssi]
     else:
-        sql_where_clause = 'where rssi !=0'
+        sql_where_clause = ''
         sql_args = []
 
     if day:
@@ -75,6 +75,12 @@ def build_sql_query(after, before, mac, rssi, day):
     if before is not None:
         sql_where_clause = '%s and date <?' % (sql_where_clause,)
         sql_args.append(before)
+
+    if zero:
+        if sql_where_clause != '':
+            sql_where_clause = '%s and rssi !=0' % (sql_where_clause,)
+        else:
+            sql_where_clause = 'where rssi != 0'
 
     if len(IGNORED) > 0:
         arg_list = ','.join(['?']*len(IGNORED))
@@ -93,6 +99,7 @@ def main():
     parser.add_argument('-m', '--mac', help='filter for that mac address')
     parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
     parser.add_argument('-p', '--privacy', action='store_true', help='merge all LAA mac into one')
+    parser.add_argument('-z', '--zero', action='store_true', help='filter rssi value of 0')
     args = parser.parse_args()
 
     before = None
@@ -104,7 +111,7 @@ def main():
 
     conn = sqlite3.connect('probemon.db')
     c = conn.cursor()
-    sql, sql_args = build_sql_query(after, before, args.mac, args.rssi, args.day)
+    sql, sql_args = build_sql_query(after, before, args.mac, args.rssi, args.zero, args.day)
     c.execute(sql, sql_args)
 
     if args.log:
@@ -132,7 +139,8 @@ def main():
             d['last'] = row[0]
         if row[0] < d['first']:
             d['first'] = row[0]
-        d['rssi'].append(row[4])
+        if row[4] != 0:
+            d['rssi'].append(row[4])
 
     conn.close()
 
