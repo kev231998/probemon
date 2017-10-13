@@ -62,8 +62,9 @@ if args.mac:
     else:
         mac = args.mac
 
-    sql = '''select date,mac.address,mac.vendor,ssid.name,rssi from probemon
+    sql = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
     inner join mac on mac.id=probemon.mac
+    inner join vendor on vendor.id=mac.vendor
     inner join ssid on ssid.id=probemon.ssid
     where mac.address like ? and rssi != 0
     order by date'''
@@ -71,8 +72,9 @@ if args.mac:
     if args.rssi is None:
         args.rssi = -99
 elif args.rssi:
-    sql = '''select date,mac.address,mac.vendor,ssid.name,rssi from probemon
+    sql = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
     inner join mac on mac.id=probemon.mac
+    inner join vendor on vendor.id=mac.vendor
     inner join ssid on ssid.id=probemon.ssid
     where rssi>? and rssi != 0
     order by date'''
@@ -83,8 +85,9 @@ else:
         before = time.time() # now
         after = before - NUMOFSECSINADAY # since one day in the past
         banner = '== Stats of the day =='
-    sql = '''select date,mac.address,mac.vendor,ssid.name,rssi from probemon
+    sql = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
     inner join mac on mac.id=probemon.mac
+    inner join vendor on vendor.id=mac.vendor
     inner join ssid on ssid.id=probemon.ssid
     where rssi != 0
     order by date'''
@@ -100,9 +103,7 @@ for row in c.fetchall():
     if is_local_bit_set(mac):
         mac = 'LAA'
     if mac not in macs:
-        c.execute('select name from vendor where id=?', (row[2],))
-        vendor = c.fetchone()[0]
-        macs[mac] = {'vendor': vendor, 'ssid': [], 'rssi': [], 'last': row[0], 'first':row[0]}
+        macs[mac] = {'vendor': row[2], 'ssid': [], 'rssi': [], 'last': row[0], 'first':row[0]}
     d = macs[mac]
     if row[3] != '' and row[3] not in d['ssid']:
         d['ssid'].append(row[3])
@@ -112,6 +113,8 @@ for row in c.fetchall():
         d['first'] = row[0]
     if row[4] > args.rssi:
         d['rssi'].append(row[4])
+
+conn.close()
 
 # sort on frequency
 tmp = [(k,len(v['rssi'])) for k,v in macs.items()]
@@ -132,5 +135,3 @@ for k,_ in tmp:
     first = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['first']))
     last = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['last']))
     print '\tFirst seen on: %s and last seen on: %s' % (first, last)
-
-conn.close()
