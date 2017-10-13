@@ -60,11 +60,7 @@ def insert_into_db(fields, db):
 
 def build_packet_cb(network, db, stdout):
     def packet_callback(packet):
-        # list of output fields
-        fields = []
-        fields.append(time.time())
-        # append the mac address itself
-        fields.append(packet.addr2)
+        now = time.time()
         # look up vendor from OUI value in MAC address
         if network:
             try:
@@ -85,19 +81,17 @@ def build_packet_cb(network, db, stdout):
                 vendor = parsed_mac.oui.registration().org
             except netaddr.core.NotRegisteredError, e:
                 vendor = 'UNKNOWN'
-        fields.append(vendor)
-        # include the SSID in the probe frame
-        fields.append(packet.info)
-        # include the RSSI value
+        # calculate RSSI value (might be [-4:-3] for you)
         rssi = -(256-ord(packet.notdecoded[-2:-1]))
-        fields.append(rssi)
+
+        fields = [now, packet.addr2, vendor, packet.info, rssi]
 
         if packet.addr2 not in IGNORED:
             insert_into_db(fields, db)
 
             if stdout:
                 # convert time to iso
-                fields[0] = str(datetime.fromtimestamp(fields[0]))[:-3].replace(' ','T')
+                fields[0] = str(datetime.fromtimestamp(now))[:-3].replace(' ','T')
                 print '\t'.join(str(i) for i in fields)
 
     return packet_callback
