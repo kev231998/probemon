@@ -10,10 +10,10 @@ import sqlite3
 import sys
 
 NUMOFSECSINADAY = 60*60*24
-KNOWNMAC = ('xx:xx:xx:xx:xx:xx')
-MYDEVICES = ('xx:xx:xx:xx:xx:xx',
-)
-IGNORED = MYDEVICES
+
+# read config variable from config.txt file
+with open('config.txt') as f:
+    exec('\n'.join(f.readlines()))
 
 def is_local_bit_set(mac):
     fields = mac.split(':')

@@ -20,9 +20,9 @@ DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 VERSION = '0.2'
 
  # list of mac address to ignore or use -I switch
-MYDEVICES = ('xx:xx:xx:xx:xx:xx',
-)
-IGNORED = MYDEVICES
+# read config variable from config.txt file
+with open('config.txt') as f:
+    exec('\n'.join(f.readlines()))
 
 def insert_into_db(fields, db):
     date, mac, vendor, ssid, rssi = fields
