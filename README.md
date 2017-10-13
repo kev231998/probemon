@@ -91,3 +91,14 @@ The dependencies are:
 * for probemon.py: scapy, python-netaddr
 * for stats.py: None
 * for plot.py: matplotlib, cycler
+
+## Locally Administered Addresses
+
+> A locally administered address is assigned to a device by a network administrator, overriding the burned-in address.
+
+> Universally administered and locally administered addresses are distinguished by setting the second-least-significant bit of the first octet of the address. This bit is also referred to as the U/L bit, short for Universal/Local, which identifies how the address is administered.
+(source wikipedia)
+
+These type of MAC addresses are used by recent various OS/wifi stack to send probe requests anonymously, and using at the same time randomization.
+
+So it defeats tracking and render probemon useless in that case. But not all devices are using this randomization technique, yet.
