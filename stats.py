@@ -44,6 +44,7 @@ parser.add_argument('-a', '--after', help='filter before this timestamp')
 parser.add_argument('-b', '--before', help='filter after this timestamp')
 parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
 parser.add_argument('-m', '--mac', help='filter for that mac address')
+parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
 args = parser.parse_args()
 
 banner = None
@@ -92,6 +93,14 @@ else:
     where rssi != 0
     order by date'''
     c.execute(sql)
+
+if args.log:
+    for row in c.fetchall():
+        t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(row[0]))
+        print '\t'.join([t, row[1], row[2], row[3], str(row[4])])
+
+    conn.close()
+    sys.exit(0)
 
 macs = {}
 for row in c.fetchall():

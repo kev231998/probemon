@@ -34,8 +34,8 @@ This script simplifies the analysis of the recorded data by drawing a chart that
 mac address via the recorded probe request.
 
 ```
-usage: plot.py [-h] [-b DB] [-d DAYS] [-l] [-k KNOWNMAC] [-m MIN] [-M MAC]
-               [-p] [-r RSSI] [-s START]
+usage: plot.py [-h] [-b DB] [-d DAYS] [-i] [-l] [-k KNOWNMAC] [-m MIN]
+               [-M MAC] [-p] [-r RSSI] [-s START]
 
 Plot MAC presence from probe request sniff
 
@@ -43,6 +43,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -b DB, --db DB        file name of the db
   -d DAYS, --days DAYS  number of days to keep
+  -i, --image           output an image
   -l, --legend          add a legend
   -k KNOWNMAC, --knownmac KNOWNMAC
                         known mac to highlight in red
@@ -68,7 +69,7 @@ When you export to an image, you lose that feature but you can add a legend inst
 It allows you to request the database about a specific mac address and get statistics about it,
 or filter based on a RSSI value. You can also specify the start time and end time of your request.
 ```
-usage: stats.py [-h] [-a AFTER] [-b BEFORE] [-r RSSI] [-m MAC]
+usage: stats.py [-h] [-a AFTER] [-b BEFORE] [-r RSSI] [-m MAC] [-l]
 
 Find RSSI stats for a given mac
 
@@ -80,4 +81,5 @@ optional arguments:
                         filter after this timestamp
   -r RSSI, --rssi RSSI  filter for that minimal RSSI value
   -m MAC, --mac MAC     filter for that mac address
+  -l, --log             log all entries instead of showing stats
 ```
