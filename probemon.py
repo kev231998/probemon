@@ -82,7 +82,10 @@ def build_packet_cb(network, db, stdout):
             except netaddr.core.NotRegisteredError, e:
                 vendor = 'UNKNOWN'
         # calculate RSSI value (might be [-4:-3] for you)
-        rssi = -(256-ord(packet.notdecoded[-2:-1]))
+        try:
+            rssi = -(256-ord(packet.notdecoded[-2:-1]))
+        except TypeError:
+            rssi = 0
 
         fields = [now, packet.addr2, vendor, packet.info, rssi]
 
