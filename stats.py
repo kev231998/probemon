@@ -153,7 +153,7 @@ def main():
 
         first = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['first']))
         last = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['last']))
-        print '\tFirst seen on: %s and last seen on: %s' % (first, last)
+        print '\tFirst seen at %s and last seen at %s' % (first, last)
 
 if __name__ == '__main__':
     try:
