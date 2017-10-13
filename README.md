@@ -12,7 +12,8 @@ Another tool presents statistics about the mac address present in the database.
 ## Usage
 ### probemon.py
 ```
-usage: probemon.py [-h] [-c CHANNEL] [-d DB] [-i INTERFACE] [-n] [-s]
+usage: probemon.py [-h] [-c CHANNEL] [-d DB] -i INTERFACE [-I IGNORE] [-n]
+                   [-s]
 
 a command line tool for logging 802.11 probe request frames
 
@@ -23,6 +24,8 @@ optional arguments:
   -d DB, --db DB        database file name to use
   -i INTERFACE, --interface INTERFACE
                         the capture interface to use
+  -I IGNORE, --ignore IGNORE
+                        mac address to ignore
   -n, --network         to use the network to look up for mac address vendor
   -s, --stdout          also log probe request to stdout
 ```
@@ -69,7 +72,8 @@ When you export to an image, you lose that feature but you can add a legend inst
 It allows you to request the database about a specific mac address and get statistics about it,
 or filter based on a RSSI value. You can also specify the start time and end time of your request.
 ```
-usage: stats.py [-h] [-a AFTER] [-b BEFORE] [-r RSSI] [-m MAC] [-l]
+usage: stats.py [-h] [-a AFTER] [-b BEFORE] [-d] [--db DB] [-l] [-m MAC]
+                [-r RSSI] [-p] [-z]
 
 Find RSSI stats for a given mac
 
@@ -79,9 +83,13 @@ optional arguments:
                         filter before this timestamp
   -b BEFORE, --before BEFORE
                         filter after this timestamp
-  -r RSSI, --rssi RSSI  filter for that minimal RSSI value
-  -m MAC, --mac MAC     filter for that mac address
+  -d, --day             filter only for the past day
+  --db DB               file name of database
   -l, --log             log all entries instead of showing stats
+  -m MAC, --mac MAC     filter for that mac address
+  -r RSSI, --rssi RSSI  filter for that minimal RSSI value
+  -p, --privacy         merge all LAA mac into one
+  -z, --zero            filter rssi value of 0
 ```
 
 # Note
