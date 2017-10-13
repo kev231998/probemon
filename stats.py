@@ -8,6 +8,9 @@ import sys
 import codecs
 import locale
 sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
+# avoid IOError when quitting less
+from signal import signal, SIGPIPE, SIG_DFL
+signal(SIGPIPE, SIG_DFL)
 
 NUMOFSECSINADAY = 60*60*24
 
