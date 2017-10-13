@@ -83,3 +83,11 @@ optional arguments:
   -m MAC, --mac MAC     filter for that mac address
   -l, --log             log all entries instead of showing stats
 ```
+
+# Note
+This is still using python2 /o\\.
+
+The dependencies are:
+* for probemon.py: scapy, python-netaddr
+* for stats.py: None
+* for plot.py: matplotlib, cycler
