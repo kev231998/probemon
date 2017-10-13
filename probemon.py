@@ -60,25 +60,15 @@ def insert_into_db(fields, db):
 
 def build_packet_cb(network, db, stdout):
     def packet_callback(packet):
-        if not packet.haslayer(Dot11):
-            return
-
-        # we are looking for management frames with a probe subtype
-        # if neither match we are done here
-        if packet.type != 0 or packet.subtype != 0x04:
+        if not packet.haslayer(Dot11ProbeReq):
             return
 
         # list of output fields
         fields = []
-
-        # determine preferred time format
-        log_time = time.time()
-        fields.append(log_time)
-
+        fields.append(time.time())
         # append the mac address itself
         fields.append(packet.addr2)
-
-        # parse mac address and look up the organization from the vendor octets
+        # look up vendor from OUI value in MAC address
         if network:
             try:
                 r = urllib2.urlopen('https://api.macvendors.com/%s' % packet.addr2)
@@ -87,24 +77,23 @@ def build_packet_cb(network, db, stdout):
             except SocketError as e:
                 if e.errno != errno.ECONNRESET:
                     raise # Not error we are looking for
-                fields.append('UNKNOWN')
+                vendor = 'UNKNOWN'
             except urllib2.HTTPError:
-                fields.append('UNKNOWN')
+                vendor = 'UNKNOWN'
             except urllib2.URLError:
-                print 'URLError: %s' % packet.addr2
-                fields.append('UNKNOWN')
+                vendor = 'UNKNOWN'
         else:
             try:
                 parsed_mac = netaddr.EUI(packet.addr2)
-                fields.append(parsed_mac.oui.registration().org)
+                vendor = parsed_mac.oui.registration().org
             except netaddr.core.NotRegisteredError, e:
-                fields.append('UNKNOWN')
-
+                vendor = 'UNKNOWN'
+        fields.append(vendor)
         # include the SSID in the probe frame
         fields.append(packet.info)
-
-        rssi_val = -(256-ord(packet.notdecoded[-2:-1]))
-        fields.append(rssi_val)
+        # include the RSSI value
+        rssi = -(256-ord(packet.notdecoded[-2:-1]))
+        fields.append(rssi)
 
         if packet.addr2 not in IGNORED:
             insert_into_db(fields, db)
