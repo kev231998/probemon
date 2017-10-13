@@ -11,6 +11,9 @@ import sys
 
 NUMOFSECSINADAY = 60*60*24
 KNOWNMAC = ('xx:xx:xx:xx:xx:xx')
+MYDEVICES = ('xx:xx:xx:xx:xx:xx',
+)
+IGNORED = MYDEVICES
 
 def is_local_bit_set(mac):
     fields = mac.split(':')
@@ -56,23 +59,29 @@ else:
     end_time = c.fetchone()[0]
     start_time = end_time - NUMOFSECSINADAY*args.days
 
-# keep only the data between 2 timestamps
+# keep only the data between 2 timestamps ignoring IGNORED macs with rssi
+# greater than the min value
 time_list = []
 mac_list = []
-sql = 'select date,mac,rssi from probemon where date < ? and date > ? order by date'
-for row in c.execute(sql, (end_time, start_time)):
-    # and filter with rssi value
-    if row[2] > args.rssi:
-        time_list.append(row[0])
-        mac_list.append(row[1])
+arg_list = ','.join(['?']*len(IGNORED))
+sql = '''select date,mac.address,rssi from probemon
+    inner join mac on mac.id=probemon.mac
+    where date < ? and date > ?
+    and mac.address not in (%s)
+    and rssi > ?
+    order by date''' % (arg_list,)
+for row in c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,)):
+    time_list.append(row[0])
+    mac_list.append(row[1])
+conn.close()
 
- #transform data to keep log datetime for each mac
-data = []
 if args.mac :
     macs = args.mac
 else:
     macs = list(set(mac_list))
-#print len(macs)
+
+data = []
+# transform data to keep log datetime for each mac
 for m in macs:
     times = [time_list[i] for i,x in enumerate(mac_list) if x == m]
     if len(times) > args.min:
@@ -80,14 +89,8 @@ for m in macs:
 
 # sort the data on frequency of appearence
 data = sorted(data, key=lambda x:len(x[1]))
-# retrieve mac address values to show on the chart
-macs = []
-for x,_ in data:
-    c.execute('select address from mac where id=?', (x,))
-    macs.append(c.fetchone()[0])
+macs = [x for x,_ in data]
 times = [x for _,x in data]
-
-conn.close()
 
 # merge all LAA mac into one plot for a virtual MAC called 'LAA'
 if args.privacy:
