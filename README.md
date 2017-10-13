@@ -1,12 +1,12 @@
 # probemon
 A simple command line tool for monitoring and logging 802.11 probe frames with tools to plot mac presence and get statistics.
 
-Based on probemon, this rewriten version uses an sqlite db like in probeSniffer. It does not hop on channels as
+Based on probemon, this rewritten version uses an sqlite db like in probeSniffer. It does not hop on channels as
 you lose more traffic by hopping than by simply staying on a major channel (1,6,11).
-As the log can quickly grow overtime, we use here a sqlite database to store the data from the probe request frames.
+As the log can quickly grow over time, we use here a sqlite database to store the data from the probe request frames.
 
 This simple python script uses scapy so that it records 802.11 probe requests over a long period of time.
-A tool using matplotlib allows you to draw a chart to visualize easily the mac adress presence over time.
+A tool using matplotlib allows you to draw a chart to visualize easily the mac address presence over time.
 Another tool presents statistics about the mac address present in the database.
 
 ## Usage
@@ -57,8 +57,8 @@ optional arguments:
 * -d/--days specify the number of days that will lapse the chart from 12AM to 12AM.
 * -k/--knowmac (can be repeated) to specify known mac address that will be colored in red.
 * -p/--privacy switch merge all Locally Administered Addresses (MAC) into a single plot. Whether this option is used or not, they are colored in grey.
-* -m/--min allows to specify the minimum of probe requests that are needed to be displayed on the chart.
-* -r/--rssi allows to filter probe resquest based the the RSSI value
+* -m/--min allows specifying the minimum of probe requests that are needed to be displayed on the chart.
+* -r/--rssi allows filtering probe request based the RSSI value
 * -s/--start allows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
 
 ![Image of chart plotted with plot.py](example.png)
