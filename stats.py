@@ -89,9 +89,10 @@ def main():
     parser.add_argument('-a', '--after', help='filter before this timestamp')
     parser.add_argument('-b', '--before', help='filter after this timestamp')
     parser.add_argument('-d', '--day', action='store_true', help='filter only for the past day')
-    parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
-    parser.add_argument('-m', '--mac', help='filter for that mac address')
     parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
+    parser.add_argument('-m', '--mac', help='filter for that mac address')
+    parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
+    parser.add_argument('-p', '--privacy', action='store_true', help='merge all LAA mac into one')
     args = parser.parse_args()
 
     before = None
@@ -119,7 +120,7 @@ def main():
     macs = {}
     for row in c.fetchall():
         mac = row[1]
-        if is_local_bit_set(mac):
+        if args.privacy and is_local_bit_set(mac):
             # create virtual mac for LAA mac address
             mac = 'LAA'
         if mac not in macs:
@@ -142,7 +143,7 @@ def main():
     # print our stats
     for k,_ in tmp:
         v = macs[k]
-        print 'MAC: %s, VENDOR: %s, SSIDs: %s' % (k, v['vendor'].decode('utf-8'), ','.join(v['ssid']))
+        print 'MAC: %s, VENDOR: %s, SSIDs: %s' % (k, v['vendor'].decode('utf-8'), ','.join(sorted(v['ssid'])))
         rssi = v['rssi']
         if rssi != []:
             print '\tRSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
