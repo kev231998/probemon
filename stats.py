@@ -95,6 +95,7 @@ def main():
     parser.add_argument('-a', '--after', help='filter before this timestamp')
     parser.add_argument('-b', '--before', help='filter after this timestamp')
     parser.add_argument('-d', '--day', action='store_true', help='filter only for the past day')
+    parser.add_argument('--db', default='probemon.db', help='file name of database')
     parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
     parser.add_argument('-m', '--mac', help='filter for that mac address')
     parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
@@ -109,7 +110,7 @@ def main():
     if args.before:
         before = parse_ts(args.before)
 
-    conn = sqlite3.connect('probemon.db')
+    conn = sqlite3.connect(args.db)
     c = conn.cursor()
     sql, sql_args = build_sql_query(after, before, args.mac, args.rssi, args.zero, args.day)
     c.execute(sql, sql_args)
