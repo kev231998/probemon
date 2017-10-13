@@ -21,6 +21,7 @@ def is_local_bit_set(mac):
 parser = argparse.ArgumentParser(description='Plot MAC presence from probe request sniff')
 parser.add_argument('-b', '--db', default='probemon.db', help='file name of the db')
 parser.add_argument('-d', '--days', type=int, default=1, help='number of days to keep')
+parser.add_argument('-i', '--image', action='store_true', default=False, help='output an image')
 parser.add_argument('-l', '--legend', action='store_true', default=False, help='add a legend')
 parser.add_argument('-k', '--knownmac', action='append', help='known mac to highlight in red')
 parser.add_argument('-m', '--min', type=int, default=3, help='minimum number of probe requests to consider')
@@ -154,5 +155,11 @@ plt.xlim(start_time-5*60, end_time+5*60)
 plt.ylim(-1, len(macs))
 
 # and tada !
-plt.show()
-#plt.savefig('test.svg', format='svg')
+if args.image:
+    height = 1366 # in pixels
+    width = 768 # in pxiels
+    fig.set_size_inches(float(height)/100, float(width)/100)
+    fig.savefig('plot.png', dpi=100)
+    #fig.savefig('test.svg', format='svg')
+else:
+    plt.show()
