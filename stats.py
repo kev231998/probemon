@@ -42,108 +42,107 @@ def parse_ts(ts):
             sys.exit(-1)
     return t
 
-parser = argparse.ArgumentParser(description='Find RSSI stats for a given mac')
-parser.add_argument('-a', '--after', help='filter before this timestamp')
-parser.add_argument('-b', '--before', help='filter after this timestamp')
-parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
-parser.add_argument('-m', '--mac', help='filter for that mac address')
-parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
-args = parser.parse_args()
+def build_sql_query(after, before, mac, rssi, day):
+    sql_head = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
+    inner join mac on mac.id=probemon.mac
+    inner join vendor on vendor.id=mac.vendor
+    inner join ssid on ssid.id=probemon.ssid'''
+    sql_tail = 'order by date'
 
-banner = None
-
-if args.after:
-    after = parse_ts(args.after)
-
-if args.before:
-    before = parse_ts(args.before)
-
-conn = sqlite3.connect('probemon.db')
-c = conn.cursor()
-if args.mac:
-    if len(args.mac) != 17:
-        mac = '%s%%' % args.mac
+    if mac:
+        if len(mac) != 17:
+            mac = '%s%%' % mac
+        sql_where_clause = 'where mac.address like ? and rssi !=0'
+        sql_args = [mac]
+    elif rssi:
+        sql_where_clause = 'where rssi>? and rssi !=0'
+        sql_args = [rssi]
     else:
-        mac = args.mac
+        sql_where_clause = 'where rssi !=0'
+        sql_args = []
 
-    sql = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
-    inner join mac on mac.id=probemon.mac
-    inner join vendor on vendor.id=mac.vendor
-    inner join ssid on ssid.id=probemon.ssid
-    where mac.address like ? and rssi != 0
-    order by date'''
-    c.execute(sql, (mac,))
-    if args.rssi is None:
-        args.rssi = -99
-elif args.rssi:
-    sql = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
-    inner join mac on mac.id=probemon.mac
-    inner join vendor on vendor.id=mac.vendor
-    inner join ssid on ssid.id=probemon.ssid
-    where rssi>? and rssi != 0
-    order by date'''
-    c.execute(sql, (args.rssi,))
-else:
-    if args.after is None and args.before is None:
-        # print the stats of the day
+    if day:
         before = time.time() # now
         after = before - NUMOFSECSINADAY # since one day in the past
-        banner = '== Stats of the day =='
-    sql = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
-    inner join mac on mac.id=probemon.mac
-    inner join vendor on vendor.id=mac.vendor
-    inner join ssid on ssid.id=probemon.ssid
-    where rssi != 0
-    order by date'''
-    c.execute(sql)
 
-if args.log:
+    if after is not None:
+        sql_where_clause = '%s and date >?' % (sql_where_clause,)
+        sql_args.append(after)
+    if before is not None:
+        sql_where_clause = '%s and date <?' % (sql_where_clause,)
+        sql_args.append(before)
+
+    sql = '%s %s %s' % (sql_head, sql_where_clause, sql_tail)
+    return sql, sql_args
+
+def main():
+    parser = argparse.ArgumentParser(description='Find RSSI stats for a given mac')
+    parser.add_argument('-a', '--after', help='filter before this timestamp')
+    parser.add_argument('-b', '--before', help='filter after this timestamp')
+    parser.add_argument('-d', '--day', action='store_true', help='filter only for the past day')
+    parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
+    parser.add_argument('-m', '--mac', help='filter for that mac address')
+    parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
+    args = parser.parse_args()
+
+    before = None
+    after = None
+    if args.after:
+        after = parse_ts(args.after)
+    if args.before:
+        before = parse_ts(args.before)
+
+    conn = sqlite3.connect('probemon.db')
+    c = conn.cursor()
+    sql, sql_args = build_sql_query(after, before, args.mac, args.rssi, args.day)
+    c.execute(sql, sql_args)
+
+    if args.log:
+        for row in c.fetchall():
+            t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(row[0]))
+            print '\t'.join([t, row[1], row[2], row[3], str(row[4])])
+
+        conn.close()
+        return
+
+    macs = {}
     for row in c.fetchall():
-        t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(row[0]))
-        print '\t'.join([t, row[1], row[2], row[3], str(row[4])])
-
-    conn.close()
-    sys.exit(0)
-
-macs = {}
-for row in c.fetchall():
-    if args.after and row[0] < after:
-        continue
-    if args.before and row[0] > before:
-        continue
-    mac = row[1]
-    if is_local_bit_set(mac):
-        mac = 'LAA'
-    if mac not in macs:
-        macs[mac] = {'vendor': row[2], 'ssid': [], 'rssi': [], 'last': row[0], 'first':row[0]}
-    d = macs[mac]
-    if row[3] != '' and row[3] not in d['ssid']:
-        d['ssid'].append(row[3])
-    if row[0] > d['last']:
-        d['last'] = row[0]
-    if row[0] < d['first']:
-        d['first'] = row[0]
-    if row[4] > args.rssi:
+        mac = row[1]
+        if is_local_bit_set(mac):
+            mac = 'LAA'
+        if mac not in macs:
+            macs[mac] = {'vendor': row[2], 'ssid': [], 'rssi': [], 'last': row[0], 'first':row[0]}
+        d = macs[mac]
+        if row[3] != '' and row[3] not in d['ssid']:
+            d['ssid'].append(row[3])
+        if row[0] > d['last']:
+            d['last'] = row[0]
+        if row[0] < d['first']:
+            d['first'] = row[0]
         d['rssi'].append(row[4])
 
-conn.close()
+    conn.close()
 
-# sort on frequency
-tmp = [(k,len(v['rssi'])) for k,v in macs.items()]
-tmp = reversed(sorted(tmp, key=lambda k:k[1]))
+    # sort on frequency
+    tmp = [(k,len(v['rssi'])) for k,v in macs.items()]
+    tmp = reversed(sorted(tmp, key=lambda k:k[1]))
 
-if banner is not None:
-    print banner
-for k,_ in tmp:
-    v = macs[k]
-    print 'MAC: %s, VENDOR: %s, SSIDs: %s' % (k, v['vendor'].decode('utf-8'), ','.join(v['ssid']))
-    rssi = v['rssi']
-    if rssi != []:
-        print '\tRSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
-            len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
-    else:
-        print '\tRSSI: Nothing found.'
+    for k,_ in tmp:
+        v = macs[k]
+        print 'MAC: %s, VENDOR: %s, SSIDs: %s' % (k, v['vendor'].decode('utf-8'), ','.join(v['ssid']))
+        rssi = v['rssi']
+        if rssi != []:
+            print '\tRSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
+                len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
+        else:
+            print '\tRSSI: Nothing found.'
 
-    first = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['first']))
-    last = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['last']))
-    print '\tFirst seen on: %s and last seen on: %s' % (first, last)
+        first = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['first']))
+        last = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['last']))
+        print '\tFirst seen on: %s and last seen on: %s' % (first, last)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

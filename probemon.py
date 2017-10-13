@@ -11,6 +11,7 @@ from scapy.all import *
 import sqlite3
 import netaddr
 
+# deal with socket error when connecting to macvendors.com
 from socket import error as SocketError
 import errno
 
