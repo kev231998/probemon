@@ -14,6 +14,10 @@ signal(SIGPIPE, SIG_DFL)
 
 NUMOFSECSINADAY = 60*60*24
 
+MYDEVICES = ('xx:xx:xx:xx:xx:xx',
+)
+IGNORED = MYDEVICES
+
 def is_local_bit_set(mac):
     fields = mac.split(':')
     if '{0:08b}'.format(int(fields[0], 16))[-2] == '1':
@@ -71,6 +75,11 @@ def build_sql_query(after, before, mac, rssi, day):
     if before is not None:
         sql_where_clause = '%s and date <?' % (sql_where_clause,)
         sql_args.append(before)
+
+    if len(IGNORED) > 0:
+        arg_list = ','.join(['?']*len(IGNORED))
+        sql_where_clause = '%s and mac.address not in (%s)' % (sql_where_clause, arg_list)
+        sql_args.extend(IGNORED)
 
     sql = '%s %s %s' % (sql_head, sql_where_clause, sql_tail)
     return sql, sql_args
