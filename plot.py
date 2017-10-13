@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 from cycler import cycler
-#import matplotlib
+import matplotlib
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -114,14 +114,16 @@ ax.set_prop_cycle(cycler('color',
 
 # calculate size of marker given the number of macs to display and convert from inch to point
 markersize = (fig.get_figheight()/len(macs))*72
+# set style for the plot
+matplotlib.rc('lines', linestyle=':', linewidth=0.3, marker='|', markersize=markersize)
 # plot
 for i,p in enumerate(times):
     if macs[i] in KNOWNMAC:
-        ax.plot(p, [i]*len(p), linestyle='', marker='|', markersize=markersize, color='tab:red', label=macs[i])
+        ax.plot(p, [i]*len(p), color='tab:red', label=macs[i])
     elif macs[i] == 'LAA' or is_local_bit_set(macs[i]):
-        ax.plot(p, [i]*len(p), linestyle='', marker='|', markersize=markersize, color='tab:gray', label=macs[i])
+        ax.plot(p, [i]*len(p), color='tab:gray', label=macs[i])
     else:
-        ax.plot(p, [i]*len(p), linestyle='', marker='|', markersize=markersize, label=macs[i])
+        ax.plot(p, [i]*len(p), label=macs[i])
 
 # define helper function for labels and ticks
 def showdate(tick, pos):
