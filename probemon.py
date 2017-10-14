@@ -81,6 +81,9 @@ def build_packet_cb(network, db, stdout):
                 vendor = parsed_mac.oui.registration().org
             except netaddr.core.NotRegisteredError, e:
                 vendor = 'UNKNOWN'
+            except IndexError:
+                vendor = 'UNKNOWN'
+
         # calculate RSSI value (might be [-4:-3] for you)
         try:
             rssi = -(256-ord(packet.notdecoded[-2:-1]))
