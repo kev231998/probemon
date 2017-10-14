@@ -123,7 +123,11 @@ for i,p in enumerate(times):
     if macs[i] in KNOWNMAC:
         ax.plot(p, [i]*len(p), color='tab:red', label=macs[i])
     elif macs[i] == 'LAA' or is_local_bit_set(macs[i]):
-        ax.plot(p, [i]*len(p), color='tab:gray', label=macs[i])
+        if macs[i] != 'LAA':
+            label = '%s (LAA)' % macs[i]
+        else:
+            label = 'LAA'
+        ax.plot(p, [i]*len(p), color='tab:gray', label=label)
     else:
         ax.plot(p, [i]*len(p), label=macs[i])
 
@@ -136,7 +140,10 @@ def showhour(tick, pos):
     return time.strftime('%Hh', time.localtime(tick))
 def showmac(tick, pos):
     try:
-        return macs[int(round(tick))]
+        m = macs[int(round(tick))]
+        if m != 'LAA' and is_local_bit_set(m):
+            m = '%s (LAA)' % m
+        return m
     except IndexError:
         pass
 
