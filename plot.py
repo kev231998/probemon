@@ -95,13 +95,15 @@ times = [x for _,x in data]
 # merge all LAA mac into one plot for a virtual MAC called 'LAA'
 if args.privacy:
     indx = [i for i,x in enumerate(map(is_local_bit_set, macs)) if x]
-    t = []
-    for i in indx:
-        t.extend(times[i])
-    macs = [m for i,m in enumerate(macs) if i not in indx]
-    times = [x for i,x in enumerate(times) if i not in indx]
-    macs.append('LAA')
-    times.append(t)
+    if len(indx) > 0:
+        t = []
+        # merge all times for LAA macs
+        for i in indx:
+            t.extend(times[i])
+        macs = [m for i,m in enumerate(macs) if i not in indx]
+        times = [x for i,x in enumerate(times) if i not in indx]
+        macs.append('LAA')
+        times.append(t)
 
 # initialize plot
 fig, ax = plt.subplots()
