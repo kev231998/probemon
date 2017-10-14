@@ -76,9 +76,9 @@ for row in c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,)):
 conn.close()
 
 if args.mac :
-    macs = args.mac
+    macs = set(m for m in mac_list if any(am in m for am in args.mac))
 else:
-    macs = list(set(mac_list))
+    macs = set(mac_list)
 
 data = []
 # transform data to keep log datetime for each mac
