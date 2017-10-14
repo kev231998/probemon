@@ -119,7 +119,10 @@ def main():
         # simply output each log entry to stdout
         for row in c.fetchall():
             t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(row[0]))
-            print '\t'.join([t, row[1], row[2], row[3], str(row[4])])
+            m = row[1]
+            if is_local_bit_set(m):
+                m = '%s (LAA)' % m
+            print '\t'.join([t, m, row[2], row[3], str(row[4])])
 
         conn.close()
         return
