@@ -156,7 +156,7 @@ def main():
     for k,_ in tmp:
         v = macs[k]
         laa = ' (LAA)' if is_local_bit_set(k) else ''
-        print 'MAC: %s%s, VENDOR: %s, SSIDs: %s' % (k, laa, v['vendor'].decode('utf-8'), ','.join(sorted(v['ssid'])))
+        print 'MAC: %s%s, VENDOR: %s, SSIDs: %s' % (k, laa, v['vendor'], ','.join(sorted(v['ssid'])))
         rssi = v['rssi']
         if rssi != []:
             print '\tRSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
