@@ -5,11 +5,21 @@ import matplotlib
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.patches as mpatches
 import argparse
 import sqlite3
 import sys
 
 NUMOFSECSINADAY = 60*60*24
+
+# draws a rectangle as custom legend handler
+class MyLine2DHandler(object):
+    def legend_artist(self, legend, orig_handle, fontsize, handlebox):
+        x0, y0 = handlebox.xdescent, handlebox.ydescent
+        width, height = handlebox.width, handlebox.height
+        patch = mpatches.Rectangle([x0, y0], width, height, facecolor=orig_handle.get_color())
+        handlebox.add_artist(patch)
+        return patch
 
 # read config variable from config.txt file
 with open('config.txt') as f:
@@ -165,7 +175,10 @@ ax.format_ydata = ticker.FuncFormatter(showmac)
 ax.grid(True, axis='x', which='minor')
 # add a legend
 if args.legend:
-    ax.legend(reversed(lines), reversed(macs))
+    # reverse order to get most frequent PR macs at top
+    # add a custom label handler to draw rectangle instead of defautl line style
+    ax.legend(reversed(lines), reversed(macs), fontsize=8,
+        handler_map={matplotlib.lines.Line2D: MyLine2DHandler()})
 # avoid space around our data
 plt.xlim(start_time-5*60, end_time+5*60)
 plt.ylim(-1, len(macs))
