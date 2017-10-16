@@ -135,14 +135,15 @@ matplotlib.rc('lines', linestyle=':', linewidth=0.3, marker='|', markersize=mark
 lines = []
 for i,p in enumerate(times):
     n = len(times)-i-1
+    label = macs[i]
     if macs[i] in KNOWNMAC:
-        line, = ax.plot(p, [n]*len(p), color='tab:red', label=macs[i])
+        line, = ax.plot(p, [n]*len(p), color='tab:red', label=label)
     elif macs[i] == 'LAA' or is_local_bit_set(macs[i]):
         if macs[i] != 'LAA':
             label = '%s (LAA)' % macs[i]
         line, = ax.plot(p, [n]*len(p), color='tab:gray', label=label)
     else:
-        line, = ax.plot(p, [n]*len(p), label=macs[i])
+        line, = ax.plot(p, [n]*len(p), label=label)
     lines.append(line)
 
 # define helper function for labels and ticks
