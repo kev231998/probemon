@@ -89,6 +89,7 @@ for row in c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,)):
 conn.close()
 
 if args.mac :
+    # keep mac with args.mac as substring
     macs = set(m for m in mac_list if any(am in m for am in args.mac))
 else:
     macs = set(mac_list)
@@ -102,6 +103,7 @@ for m in macs:
 
 # sort the data on frequency of appearence
 data = sorted(data, key=lambda x:len(x[1]))
+data.reverse()
 macs = [x for x,_ in data]
 times = [x for _,x in data]
 
@@ -132,16 +134,15 @@ matplotlib.rc('lines', linestyle=':', linewidth=0.3, marker='|', markersize=mark
 # plot
 lines = []
 for i,p in enumerate(times):
+    n = len(times)-i-1
     if macs[i] in KNOWNMAC:
-        line, = ax.plot(p, [i]*len(p), color='tab:red', label=macs[i])
+        line, = ax.plot(p, [n]*len(p), color='tab:red', label=macs[i])
     elif macs[i] == 'LAA' or is_local_bit_set(macs[i]):
         if macs[i] != 'LAA':
             label = '%s (LAA)' % macs[i]
-        else:
-            label = 'LAA'
-        line, = ax.plot(p, [i]*len(p), color='tab:gray', label=label)
+        line, = ax.plot(p, [n]*len(p), color='tab:gray', label=label)
     else:
-        line, = ax.plot(p, [i]*len(p), label=macs[i])
+        line, = ax.plot(p, [n]*len(p), label=macs[i])
     lines.append(line)
 
 # define helper function for labels and ticks
