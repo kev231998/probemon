@@ -155,7 +155,7 @@ def showhour(tick, pos):
     return time.strftime('%Hh', time.localtime(tick))
 def showmac(tick, pos):
     try:
-        m = macs[int(round(tick))]
+        m = macs[len(times)-int(round(tick))-1]
         if m != 'LAA' and is_local_bit_set(m):
             m = '%s (LAA)' % m
         return m
