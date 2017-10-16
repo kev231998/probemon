@@ -119,17 +119,19 @@ markersize = (fig.get_figheight()/len(macs))*72
 # set style for the plot
 matplotlib.rc('lines', linestyle=':', linewidth=0.3, marker='|', markersize=markersize)
 # plot
+lines = []
 for i,p in enumerate(times):
     if macs[i] in KNOWNMAC:
-        ax.plot(p, [i]*len(p), color='tab:red', label=macs[i])
+        line, = ax.plot(p, [i]*len(p), color='tab:red', label=macs[i])
     elif macs[i] == 'LAA' or is_local_bit_set(macs[i]):
         if macs[i] != 'LAA':
             label = '%s (LAA)' % macs[i]
         else:
             label = 'LAA'
-        ax.plot(p, [i]*len(p), color='tab:gray', label=label)
+        line, = ax.plot(p, [i]*len(p), color='tab:gray', label=label)
     else:
-        ax.plot(p, [i]*len(p), label=macs[i])
+        line, = ax.plot(p, [i]*len(p), label=macs[i])
+    lines.append(line)
 
 # define helper function for labels and ticks
 def showdate(tick, pos):
@@ -163,7 +165,7 @@ ax.format_ydata = ticker.FuncFormatter(showmac)
 ax.grid(True, axis='x', which='minor')
 # add a legend
 if args.legend:
-    ax.legend()
+    ax.legend(reversed(lines), reversed(macs))
 # avoid space around our data
 plt.xlim(start_time-5*60, end_time+5*60)
 plt.ylim(-1, len(macs))
