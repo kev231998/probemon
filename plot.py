@@ -126,7 +126,7 @@ ax.set_prop_cycle(cycler('color',
 
 # calculate size of marker given the number of macs to display and convert from inch to point
 markersize = (fig.get_figheight()/len(macs))*72
-# set style for the plot
+# set default line style for the plot
 matplotlib.rc('lines', linestyle=':', linewidth=0.3, marker='|', markersize=markersize)
 # plot
 lines = []
@@ -159,7 +159,8 @@ def showmac(tick, pos):
     except IndexError:
         pass
 
-# customize the appearence of our figure/plot
+## customize the appearence of our figure/plot
+# customize label of major/minor ticks
 ax.xaxis.set_major_formatter(ticker.FuncFormatter(showdate))
 ax.xaxis.set_minor_formatter(ticker.FuncFormatter(showhour))
 # show minor tick every hour
@@ -187,8 +188,9 @@ plt.ylim(-1, len(macs))
 if args.image:
     height = 1366 # in pixels
     width = 768 # in pxiels
-    fig.set_size_inches(float(height)/100, float(width)/100)
-    fig.savefig('plot.png', dpi=100)
+    dpi = 100
+    fig.set_size_inches(float(height)/dpi, float(width)/dpi)
+    fig.savefig('plot.png', dpi=dpi)
     #fig.savefig('test.svg', format='svg')
 else:
     plt.show()
