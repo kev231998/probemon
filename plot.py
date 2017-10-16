@@ -11,6 +11,9 @@ import sqlite3
 import sys
 
 NUMOFSECSINADAY = 60*60*24
+# standard colors without red and gray
+COLORS = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple',
+    'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']
 
 # draws a rectangle as custom legend handler
 class MyLine2DHandler(object):
@@ -120,9 +123,7 @@ fig, ax = plt.subplots()
 # change margin around axis to the border
 fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.07)
 # set our custom color cycler (without red and gray)
-ax.set_prop_cycle(cycler('color',
-    ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple',
-    'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']))
+ax.set_prop_cycle(cycler('color', COLORS))
 
 # calculate size of marker given the number of macs to display and convert from inch to point
 markersize = (fig.get_figheight()/len(macs))*72
