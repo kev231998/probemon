@@ -169,21 +169,24 @@ ax.xaxis.set_minor_formatter(ticker.FuncFormatter(showhour))
 # show minor tick every hour
 ax.xaxis.set_minor_locator(ticker.MultipleLocator((args.days*24*60*60)/24))
 # show only integer evenly spaced on y axis
-ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, steps=[1,2,4,5,10]))
+#ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, steps=[1,2,4,5,10]))
+# don't draw y axis
+ax.yaxis.set_visible(False)
 # move down major tick labels not to overwrite minor tick labels
 ax.xaxis.set_tick_params(which='major', pad=15)
 # customize the label shown on mouse over
 ax.format_xdata = ticker.FuncFormatter(showtime)
 ax.format_ydata = ticker.FuncFormatter(showmac)
-# show a grid of vertical bar matching minor ticks
+# show vertical bars matching minor ticks
 ax.grid(True, axis='x', which='minor')
 # add a legend
 if args.legend:
     # add a custom label handler to draw rectangle instead of defautl line style
     ax.legend(lines, macs, fontsize=8,
         handler_map={matplotlib.lines.Line2D: MyLine2DHandler()})
-# avoid space around our data
-plt.xlim(start_time-5*60, end_time+5*60)
+# avoid too much space around our data by defining set
+space = 5*60 # 5 minutes
+plt.xlim(start_time-space, end_time+space)
 plt.ylim(-1, len(macs))
 
 # and tada !
