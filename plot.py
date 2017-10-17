@@ -134,16 +134,19 @@ matplotlib.rc('lines', linestyle=':', linewidth=0.3, marker='|', markersize=mark
 # plot
 lines = []
 for i,p in enumerate(times):
+    # reverse order to get most frequent at top
     n = len(times)-i-1
+    # constant value
+    q = [n]*len(p)
     label = macs[i]
     if macs[i] in KNOWNMAC:
-        line, = ax.plot(p, [n]*len(p), color='tab:red', label=label)
+        line, = ax.plot(p, q, color='tab:red', label=label)
     elif macs[i] == 'LAA' or is_local_bit_set(macs[i]):
         if macs[i] != 'LAA':
             label = '%s (LAA)' % macs[i]
-        line, = ax.plot(p, [n]*len(p), color='tab:gray', label=label)
+        line, = ax.plot(p, q, color='tab:gray', label=label)
     else:
-        line, = ax.plot(p, [n]*len(p), label=label)
+        line, = ax.plot(p, q, label=label)
     lines.append(line)
 
 # define helper function for labels and ticks
@@ -181,7 +184,7 @@ ax.format_ydata = ticker.FuncFormatter(showmac)
 ax.grid(True, axis='x', which='minor')
 # add a legend
 if args.legend:
-    # add a custom label handler to draw rectangle instead of defautl line style
+    # add a custom label handler to draw rectangle instead of default line style
     ax.legend(lines, macs, fontsize=8,
         handler_map={matplotlib.lines.Line2D: MyLine2DHandler()})
 # avoid too much space around our data by defining set
