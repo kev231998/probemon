@@ -189,8 +189,8 @@ if args.legend:
         handler_map={matplotlib.lines.Line2D: MyLine2DHandler()})
 # avoid too much space around our data by defining set
 space = 5*60 # 5 minutes
-plt.xlim(start_time-space, end_time+space)
-plt.ylim(-1, len(macs))
+ax.set_xlim(start_time-space, end_time+space)
+ax.set_ylim(-1, len(macs))
 
 # and tada !
 if args.image:
