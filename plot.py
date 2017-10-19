@@ -30,9 +30,7 @@ with open('config.txt') as f:
 
 def is_local_bit_set(mac):
     fields = mac.split(':')
-    if '{0:08b}'.format(int(fields[0], 16))[-2] == '1':
-    	return True
-    return False
+    return '{0:08b}'.format(int(fields[0], 16))[-2] == '1'
 
 parser = argparse.ArgumentParser(description='Plot MAC presence from probe request sniff')
 parser.add_argument('-b', '--db', default='probemon.db', help='file name of the db')
