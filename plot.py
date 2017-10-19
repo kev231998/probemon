@@ -190,11 +190,8 @@ ax.set_ylim(-1, len(macs))
 
 # and tada !
 if args.image:
-    height = 1366 # in pixels
-    width = 768 # in pxiels
-    dpi = 100
-    fig.set_size_inches(float(height)/dpi, float(width)/dpi)
-    fig.savefig('plot.png', dpi=dpi)
+    fig.set_size_inches(float(HEIGHT)/DPI, float(WIDTH)/DPI)
+    fig.savefig('plot.png', dpi=DPI)
     #fig.savefig('test.svg', format='svg')
 else:
     plt.show()
