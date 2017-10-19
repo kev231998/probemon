@@ -105,7 +105,7 @@ times = [x for _,x in data]
 
 # merge all LAA mac into one plot for a virtual MAC called 'LAA'
 if args.privacy:
-    indx = [i for i,x in enumerate(map(is_local_bit_set, macs)) if x]
+    indx = [i for i,m in enumerate(macs) if is_local_bit_set(m)]
     if len(indx) > 0:
         t = []
         # merge all times for LAA macs
