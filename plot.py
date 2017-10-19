@@ -48,7 +48,7 @@ args = parser.parse_args()
 if args.knownmac is not None:
     KNOWNMAC = args.knownmac
 
-# slite3
+# sqlite3
 conn = sqlite3.connect(args.db)
 c = conn.cursor()
 
@@ -72,8 +72,7 @@ else:
 
 # keep only the data between 2 timestamps ignoring IGNORED macs with rssi
 # greater than the min value
-time_list = []
-mac_list = []
+ts = {}
 arg_list = ','.join(['?']*len(IGNORED))
 sql = '''select date,mac.address,rssi from probemon
     inner join mac on mac.id=probemon.mac
@@ -82,25 +81,24 @@ sql = '''select date,mac.address,rssi from probemon
     and rssi > ?
     order by date''' % (arg_list,)
 for row in c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,)):
-    time_list.append(row[0])
-    mac_list.append(row[1])
+    if row[1] in ts:
+        ts[row[1]].append(row[0])
+    else:
+        ts[row[1]] = [row[0]]
 conn.close()
 
 if args.mac :
     # keep mac with args.mac as substring
-    macs = set(m for m in mac_list if any(am in m for am in args.mac))
+    macs = set(m for m in ts.keys() if any(am in m for am in args.mac))
 else:
-    macs = set(mac_list)
+    macs = set(ts.keys())
 
-data = []
-# transform data to keep log datetime for each mac
-for m in macs:
-    times = [time_list[i] for i,x in enumerate(mac_list) if x == m]
-    if len(times) > args.min:
-        data.append((m,times))
+for k,v in ts.items():
+    if len(v) <= args.min:
+        del ts[k]
 
 # sort the data on frequency of appearence
-data = sorted(data, key=lambda x:len(x[1]))
+data = sorted(ts.items(), key=lambda x:len(x[1]))
 data.reverse()
 macs = [x for x,_ in data]
 times = [x for _,x in data]
