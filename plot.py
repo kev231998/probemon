@@ -145,6 +145,15 @@ for i,p in enumerate(times):
         line, = ax.plot(p, q, label=label)
     lines.append(line)
 
+# add a grey background on period greater than 15 minutes without data
+alltimes = []
+for t in times:
+   alltimes.extend(t)
+alltimes.sort()
+diff = [i for i,j in enumerate(zip(alltimes[:-1], alltimes[1:])) if (j[1]-j[0])>60*15]
+for i in diff:
+    ax.axvspan(alltimes[i], alltimes[i+1], facecolor='#bbbbbb', alpha=0.5)
+
 # define helper function for labels and ticks
 def showdate(tick, pos):
     return time.strftime('%Y-%m-%d', time.localtime(tick))
