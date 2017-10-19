@@ -87,14 +87,14 @@ for row in c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,)):
         ts[row[1]] = [row[0]]
 conn.close()
 
+macs = ts.keys()
 if args.mac :
     # keep mac with args.mac as substring
-    macs = set(m for m in ts.keys() if any(am in m for am in args.mac))
-else:
-    macs = set(ts.keys())
+    macs = [m for m in ts.keys() if any(am in m for am in args.mac)]
 
+# filter our data set based on min probe request or mac appearence
 for k,v in ts.items():
-    if len(v) <= args.min:
+    if len(v) <= args.min or k not in macs:
         del ts[k]
 
 # sort the data on frequency of appearence
