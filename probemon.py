@@ -90,7 +90,7 @@ def build_packet_cb(network, db, stdout):
         except TypeError:
             rssi = 0
 
-        fields = [now, packet.addr2, vendor, packet.info, rssi]
+        fields = [now, packet.addr2, vendor, packet.info.decode('utf-8'), rssi]
 
         if packet.addr2 not in IGNORED:
             insert_into_db(fields, db)
