@@ -83,6 +83,7 @@ def build_packet_cb(network, db, stdout):
                 vendor = 'UNKNOWN'
             except IndexError:
                 vendor = 'UNKNOWN'
+        vendor = vendor.decode('utf-8')
 
         # calculate RSSI value (might be [-4:-3] for you)
         try:
