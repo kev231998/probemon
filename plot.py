@@ -114,7 +114,7 @@ if args.privacy:
         macs = [m for i,m in enumerate(macs) if i not in indx]
         times = [x for i,x in enumerate(times) if i not in indx]
         macs.append('LAA')
-        times.append(t)
+        times.append(sorted(t))
 
 # initialize plot
 fig, ax = plt.subplots()
