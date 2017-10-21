@@ -60,7 +60,7 @@ optional arguments:
 
 * -d/--days specify the number of days that will lapse the chart from 12AM to 12AM.
 * -k/--knowmac (can be repeated) to specify known mac address that will be colored in red.
-* -p/--privacy switch merge all Locally Administered Addresses (MAC) into a single plot. Whether this option is used or not, they are colored in grey.
+* -p/--privacy switch merges all Locally Administered Addresses (MAC) into a single plot. Whether this option is used or not, they are colored in grey.
 * -m/--min allows specifying the minimum of probe requests that are needed to be displayed on the chart.
 * -r/--rssi allows filtering probe request based the RSSI value
 * -s/--start allows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
@@ -93,7 +93,7 @@ optional arguments:
   -z, --zero            filter rssi value of 0
 ```
 
-# Note
+# Notes
 This is still using python2 /o\\.
 
 The dependencies are:
@@ -106,8 +106,15 @@ The dependencies are:
 > A locally administered address is assigned to a device by a network administrator, overriding the burned-in address.
 
 > Universally administered and locally administered addresses are distinguished by setting the second-least-significant bit of the first octet of the address. This bit is also referred to as the U/L bit, short for Universal/Local, which identifies how the address is administered.
-(source wikipedia)
+(source Wikipedia)
 
 These type of MAC addresses are used by recent various OS/wifi stack to send probe requests anonymously, and using at the same time randomization.
 
 So it defeats tracking and render probemon useless in that case. But not all devices are using this randomization technique, yet.
+
+## Device behavior
+It should be noted that not all devices are equal. They vary a lot in behavior regarding of the probe requests (PR). This should be taken into account when analyzing the data collected.
+
+Depending on the type of device (PC/laptop/..., printer, mobile phone/tablet, IoT device), the OS used (Linux, Windows, Android, MacOS/iOS, unknown embedded OS, ...) the wifi chipset and/or the wifi/network stack, one device behave differently from one another when sending probe request.
+
+Even phone using the same OS like android, can behave differently: some send PR every 30 seconds, while others only send PR when the screen is unlocked.
