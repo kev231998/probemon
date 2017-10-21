@@ -37,7 +37,7 @@ This script simplifies the analysis of the recorded data by drawing a chart that
 mac address via the recorded probe request.
 
 ```
-usage: plot.py [-h] [-b DB] [-d DAYS] [-i] [-l] [-k KNOWNMAC] [-m MIN]
+usage: plot.py [-h] [-b DB] [-d DAYS] [-i [IMAGE]] [-l] [-k KNOWNMAC] [-m MIN]
                [-M MAC] [-p] [-r RSSI] [-s START]
 
 Plot MAC presence from probe request sniff
@@ -46,7 +46,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -b DB, --db DB        file name of the db
   -d DAYS, --days DAYS  number of days to keep
-  -i, --image           output an image
+  -i [IMAGE], --image [IMAGE]
+                        output an image
   -l, --legend          add a legend
   -k KNOWNMAC, --knownmac KNOWNMAC
                         known mac to highlight in red
@@ -57,6 +58,7 @@ optional arguments:
   -s START, --start START
                         start timestamp
 ```
+
 * -d/--days specify the number of days that will lapse the chart from 12AM to 12AM.
 * -k/--knowmac (can be repeated) to specify known mac address that will be colored in red.
 * -p/--privacy switch merge all Locally Administered Addresses (MAC) into a single plot. Whether this option is used or not, they are colored in grey.
