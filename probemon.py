@@ -58,31 +58,17 @@ def insert_into_db(fields, db):
     conn.commit()
     conn.close()
 
-def build_packet_cb(network, db, stdout):
+def build_packet_cb(db, stdout):
     def packet_callback(packet):
         now = time.time()
         # look up vendor from OUI value in MAC address
-        if network:
-            try:
-                r = urllib2.urlopen('https://api.macvendors.com/%s' % packet.addr2)
-                fields.append(r.read())
-                r.close()
-            except SocketError as e:
-                if e.errno != errno.ECONNRESET:
-                    raise # Not error we are looking for
-                vendor = 'UNKNOWN'
-            except urllib2.HTTPError:
-                vendor = 'UNKNOWN'
-            except urllib2.URLError:
-                vendor = 'UNKNOWN'
-        else:
-            try:
-                parsed_mac = netaddr.EUI(packet.addr2)
-                vendor = parsed_mac.oui.registration().org
-            except netaddr.core.NotRegisteredError, e:
-                vendor = 'UNKNOWN'
-            except IndexError:
-                vendor = 'UNKNOWN'
+        try:
+            parsed_mac = netaddr.EUI(packet.addr2)
+            vendor = parsed_mac.oui.registration().org
+        except netaddr.core.NotRegisteredError, e:
+            vendor = 'UNKNOWN'
+        except IndexError:
+            vendor = 'UNKNOWN'
         vendor = vendor.decode('utf-8')
 
         # calculate RSSI value (might be [-4:-3] for you)
@@ -109,7 +95,6 @@ def main():
     parser.add_argument('-d', '--db', default='probemon.db', help="database file name to use")
     parser.add_argument('-i', '--interface', required=True, help="the capture interface to use")
     parser.add_argument('-I', '--ignore', action='append', help="mac address to ignore")
-    parser.add_argument('-n', '--network', action='store_true', default=False, help="to use the network to look up for mac address vendor")
     parser.add_argument('-s', '--stdout', action='store_true', default=False, help="also log probe request to stdout")
     args = parser.parse_args()
 
@@ -142,7 +127,7 @@ def main():
     # sniff on specified channel
     os.system("iwconfig %s channel %d >/dev/null 2>&1" % (args.interface, args.channel))
 
-    sniff(iface=args.interface, prn=build_packet_cb(args.network, args.db, args.stdout),
+    sniff(iface=args.interface, prn=build_packet_cb(args.db, args.stdout),
         store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
 
 if __name__ == '__main__':

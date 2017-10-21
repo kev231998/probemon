@@ -26,7 +26,6 @@ optional arguments:
                         the capture interface to use
   -I IGNORE, --ignore IGNORE
                         mac address to ignore
-  -n, --network         to use the network to look up for mac address vendor
   -s, --stdout          also log probe request to stdout
 ```
 
