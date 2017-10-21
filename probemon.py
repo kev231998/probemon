@@ -103,7 +103,7 @@ def main():
 
     conn = sqlite3.connect(args.db)
     c = conn.cursor()
-    # create tables if they do not exists
+    # create tables if they do not exist
     sql = 'create table if not exists vendor(id integer not null primary key, name text)'
     c.execute(sql)
     sql = '''create table if not exists mac(id integer not null primary key, address text,
@@ -125,7 +125,7 @@ def main():
     conn.close()
 
     # sniff on specified channel
-    os.system("iwconfig %s channel %d >/dev/null 2>&1" % (args.interface, args.channel))
+    os.system('iwconfig %s channel %d' % (args.interface, args.channel))
 
     sniff(iface=args.interface, prn=build_packet_cb(args.db, args.stdout),
         store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
