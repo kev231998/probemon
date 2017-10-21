@@ -190,7 +190,7 @@ ax.grid(True, axis='x', which='minor')
 # add a legend
 if args.legend:
     # add a custom label handler to draw rectangle instead of default line style
-    ax.legend(lines, macs, fontsize=8, loc='lower left', ncol=int(len(macs)/20),
+    ax.legend(lines, macs, fontsize=8, loc='lower left', ncol=len(macs)/30+1,
         handler_map={matplotlib.lines.Line2D: MyLine2DHandler()})
 # avoid too much space around our data by defining set
 space = 5*60 # 5 minutes
