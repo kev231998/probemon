@@ -1,13 +1,11 @@
 # probemon
-A simple command line tool for monitoring and logging 802.11 probe frames with tools to plot mac presence and get statistics.
+probemon is a simple command line tool for logging data from 802.11 probe request frames with tools to plot mac presence and get statistics.
 
-Based on probemon, this rewritten version uses an sqlite db like in probeSniffer. It does not hop on channels as
-you lose more traffic by hopping than by simply staying on a major channel (1,6,11).
-As the log can quickly grow over time, we use here a sqlite database to store the data from the probe request frames.
+This rewritten version of probemon uses an sqlite DB like in probeSniffer, as the log can quickly grow over time. It does not hop on channels as you lose more traffic by hopping than by simply staying on a major channel (1,6,11).
 
-This simple python script uses scapy so that it records 802.11 probe requests over a long period of time.
+This simple python script uses under the hood scapy.
 A tool using matplotlib allows you to draw a chart to visualize easily the mac address presence over time.
-Another tool presents statistics about the mac address present in the database.
+Another tool presents statistics about the mac addresses present in the database.
 
 ## Usage
 ### probemon.py
@@ -28,8 +26,6 @@ optional arguments:
                         mac address to ignore
   -s, --stdout          also log probe request to stdout
 ```
-
-If you have another interface, you can choose to use the -n/--network switch to use the API from macvendors.com to perform the mac address vendor look up, or stay off the net but use the netaddr python package database.
 
 ### plot script
 This script simplifies the analysis of the recorded data by drawing a chart that plots the presence of
