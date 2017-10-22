@@ -76,7 +76,7 @@ ts = {}
 arg_list = ','.join(['?']*len(IGNORED))
 sql = '''select date,mac.address,rssi from probemon
     inner join mac on mac.id=probemon.mac
-    where date < ? and date > ?
+    where date <= ? and date >= ?
     and mac.address not in (%s)
     and rssi > ?
     order by date''' % (arg_list,)
@@ -94,7 +94,7 @@ if args.mac :
 
 # filter our data set based on min probe request or mac appearence
 for k,v in ts.items():
-    if len(v) <= args.min or k not in macs:
+    if (len(v) <= args.min and k not in KNOWNMAC) or k not in macs:
         del ts[k]
 
 # sort the data on frequency of appearence
