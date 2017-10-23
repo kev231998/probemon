@@ -1,5 +1,8 @@
 archives/
 sniff.sh
+alert.sh
+server.sh
+index.html
 probemon.db
 probemon.db-journal
 plot.png
