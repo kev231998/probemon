@@ -10,6 +10,7 @@ import os
 from scapy.all import *
 import sqlite3
 import netaddr
+import base64
 
 # deal with socket error when connecting to macvendors.com
 from socket import error as SocketError
@@ -77,7 +78,13 @@ def build_packet_cb(db, stdout):
         except TypeError:
             rssi = 0
 
-        fields = [now, packet.addr2, vendor, packet.info.decode('utf-8'), rssi]
+        try:
+            ssid = packet.info.decode('utf-8')
+        except UnicodeDecodeError:
+            # encode the SSID in base64 because it will fail
+            # to be inserted into the db otherwise
+            ssid = 'b64_%s' % base64.b64encode(packet.info)
+        fields = [now, packet.addr2, vendor, ssid, rssi]
 
         if packet.addr2 not in IGNORED:
             insert_into_db(fields, db)
