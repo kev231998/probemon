@@ -46,8 +46,8 @@ optional arguments:
   -l, --legend          add a legend
   -k KNOWNMAC, --knownmac KNOWNMAC
                         known mac to highlight in red
-  -m MIN, --min MIN     minimum number of probe requests to consider
-  -M MAC, --mac MAC     only display that mac
+  -M MIN, --min MIN     minimum number of probe requests to consider
+  -m MAC, --mac MAC     only display that mac
   -p, --privacy         merge LAA MAC address
   -r RSSI, --rssi RSSI  minimal value for RSSI
   -s START, --start START
