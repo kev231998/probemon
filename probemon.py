@@ -4,7 +4,6 @@
 import time
 from datetime import datetime
 import argparse
-import urllib2
 import sys
 import os
 from scapy.all import *
@@ -12,15 +11,10 @@ import sqlite3
 import netaddr
 import base64
 
-# deal with socket error when connecting to macvendors.com
-from socket import error as SocketError
-import errno
-
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 VERSION = '0.2'
 
- # list of mac address to ignore or use -I switch
 # read config variable from config.txt file
 with open('config.txt') as f:
     exec('\n'.join(f.readlines()))
