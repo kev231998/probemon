@@ -1,9 +1,10 @@
 archives/
 sniff.sh
 alert.sh
-server.sh
+serve.sh
 index.html
 probemon.db
 probemon.db-journal
 plot.png
 plot.svg
+lastlog.txt
