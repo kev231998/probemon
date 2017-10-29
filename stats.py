@@ -19,10 +19,8 @@ with open('config.txt') as f:
     exec('\n'.join(f.readlines()))
 
 def is_local_bit_set(mac):
-    fields = mac.split(':')
-    if '{0:08b}'.format(int(fields[0], 16))[-2] == '1':
-    	return True
-    return False
+    byte = mac.split(':')
+    return int(byte[0], 16) & 0b00000010 == 0b00000010
 
 def median(lst):
     n = len(lst)
