@@ -66,8 +66,9 @@ if args.start:
             sys.exit(-1)
     end_time = start_time + NUMOFSECSINADAY*args.days
 else:
-    c.execute('select max(date) from probemon')
-    end_time = c.fetchone()[0]
+    #c.execute('select max(date) from probemon')
+    #end_time = c.fetchone()[0]
+    end_time = time.time()
     start_time = end_time - NUMOFSECSINADAY*args.days
 
 # keep only the data between 2 timestamps ignoring IGNORED macs with rssi
