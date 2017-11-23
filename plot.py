@@ -27,6 +27,7 @@ class MyLine2DHandler(object):
 # read config variable from config.txt file
 with open('config.txt') as f:
     exec('\n'.join(f.readlines()))
+MERGED = (m[:8] for m in MERGED)
 
 def is_local_bit_set(mac):
     byte = mac.split(':')
@@ -115,6 +116,19 @@ if args.privacy:
         macs = [m for i,m in enumerate(macs) if i not in indx]
         times = [x for i,x in enumerate(times) if i not in indx]
         macs.append('LAA')
+        times.append(sorted(t))
+
+# merge all same vendor mac into one plot for a virtual MAC called 'OUI'
+for mv in MERGED:
+    indx = [i for i,m in enumerate(macs) if m[:8] == mv]
+    if len(indx) > 0:
+        t = []
+        # merge all times for vendor macs
+        for i in indx:
+            t.extend(times[i])
+        macs = [m for i,m in enumerate(macs) if i not in indx]
+        times = [x for i,x in enumerate(times) if i not in indx]
+        macs.append(mv)
         times.append(sorted(t))
 
 # initialize plot

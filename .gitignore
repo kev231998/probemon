@@ -5,6 +5,6 @@ serve.sh
 index.html
 probemon.db
 probemon.db-journal
-plot.png
+plot*.png
 plot.svg
 lastlog.txt
