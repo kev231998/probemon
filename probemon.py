@@ -132,6 +132,9 @@ def main():
         store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
 
 # vim: set et ts=4 sw=4:
