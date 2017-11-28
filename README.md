@@ -90,7 +90,7 @@ optional arguments:
 ```
 
 # Notes
-This is still using python2 /o\\.
+This is still using python2 😳 🤦 🕳️. This is easily converted to python3 script with 2to3 though.
 
 The dependencies are:
 * for probemon.py: scapy, python-netaddr
