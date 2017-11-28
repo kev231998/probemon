@@ -1,14 +1,16 @@
 import sqlite3
 import sys
+import argparse
 
-if len(sys.argv) < 2:
-    print 'Error: needs an argument'
-    sys.exit(-1)
+parser = argparse.ArgumentParser(description='Merge one db into the current one')
+parser.add_argument('-o', '--output', default='probemon.db', help='file name of the target/output db')
+parser.add_argument('-i', '--input', help='file name of the input db', required=True)
+args = parser.parse_args()
 
-conn_in = sqlite3.connect(sys.argv[1])
+conn_in = sqlite3.connect(args.input)
 c_in = conn_in.cursor()
 
-conn_out = sqlite3.connect('probemon.db')
+conn_out = sqlite3.connect(args.output)
 c_out = conn_out.cursor()
 
 c_in.execute('select * from probemon')
