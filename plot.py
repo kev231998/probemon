@@ -195,8 +195,8 @@ ax.xaxis.set_minor_locator(ticker.MultipleLocator((args.days*24*60*60)/24))
 #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, steps=[1,2,4,5,10]))
 # don't draw y axis
 ax.yaxis.set_visible(False)
-# move down major tick labels not to overwrite minor tick labels
-ax.xaxis.set_tick_params(which='major', pad=15)
+# move down major tick labels not to overwrite minor tick labels and do not show major ticks
+ax.xaxis.set_tick_params(which='major', pad=15, length=0)
 # customize the label shown on mouse over
 ax.format_xdata = ticker.FuncFormatter(showtime)
 ax.format_ydata = ticker.FuncFormatter(showmac)
