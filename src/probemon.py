@@ -61,10 +61,9 @@ def build_packet_cb(db, stdout):
             parsed_mac = netaddr.EUI(packet.addr2)
             vendor = parsed_mac.oui.registration().org
         except netaddr.core.NotRegisteredError, e:
-            vendor = 'UNKNOWN'
+            vendor = u'UNKNOWN'
         except IndexError:
-            vendor = 'UNKNOWN'
-        vendor = vendor.decode('utf-8')
+            vendor = u'UNKNOWN'
 
         # calculate RSSI value (might be [-4:-3] for you)
         try:
@@ -77,7 +76,7 @@ def build_packet_cb(db, stdout):
         except UnicodeDecodeError:
             # encode the SSID in base64 because it will fail
             # to be inserted into the db otherwise
-            ssid = 'b64_%s' % base64.b64encode(packet.info)
+            ssid = u'b64_%s' % base64.b64encode(packet.info)
         fields = [now, packet.addr2, vendor, ssid, rssi]
 
         if packet.addr2 not in IGNORED:
