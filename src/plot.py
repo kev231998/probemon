@@ -131,6 +131,10 @@ for mv in MERGED:
         macs.append(mv)
         times.append(sorted(t))
 
+if len(times) == 0 or len(macs) == 0:
+    print 'Error: nothing to plot'
+    sys.exit(-1)
+
 # initialize plot
 fig, ax = plt.subplots()
 # change margin around axis to the border
