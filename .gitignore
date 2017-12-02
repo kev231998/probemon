@@ -1,8 +1,8 @@
-archives/
-www/
-src/alert.sh
-src/generate.sh
-src/sniff.sh
-src/probemon.db
-src/probemon.db-journal
-rsync.sh
+/archives/
+/src/www/
+/src/alert.sh
+/src/generate.sh
+/src/sniff.sh
+/src/probemon.db
+/src/probemon.db-journal
+/rsync.sh
