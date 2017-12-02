@@ -51,38 +51,42 @@ def build_sql_query(after, before, mac, rssi, zero, day):
     inner join ssid on ssid.id=probemon.ssid'''
     sql_tail = 'order by date'
 
+    sql_where_clause = ''
+    sql_args = []
+
+    def add_arg(clause, new_arg):
+        if clause == '':
+            clause = 'where %s' % new_arg
+        else:
+            clause = '%s and %s' % (clause, new_arg)
+        return clause
+
     if mac:
         if len(mac) != 17:
             mac = '%s%%' % mac
-        sql_where_clause = 'where mac.address like ?'
-        sql_args = [mac]
-    elif rssi:
-        sql_where_clause = 'where rssi>?'
-        sql_args = [rssi]
-    else:
-        sql_where_clause = ''
-        sql_args = []
+        sql_where_clause = add_arg(sql_where_clause, 'mac.address like ?')
+        sql_args.append(mac)
+    if rssi:
+        sql_where_clause = add_arg(sql_where_clause, 'rssi>?')
+        sql_args.append(rssi)
 
     if day:
         before = time.time() # now
         after = before - NUMOFSECSINADAY # since one day in the past
 
     if after is not None:
-        sql_where_clause = '%s and date >?' % (sql_where_clause,)
+        sql_where_clause = add_arg(sql_where_clause, 'date>?')
         sql_args.append(after)
     if before is not None:
-        sql_where_clause = '%s and date <?' % (sql_where_clause,)
+        sql_where_clause = add_arg(sql_where_clause, 'date<?')
         sql_args.append(before)
 
     if zero:
-        if sql_where_clause != '':
-            sql_where_clause = '%s and rssi !=0' % (sql_where_clause,)
-        else:
-            sql_where_clause = 'where rssi != 0'
+        sql_where_clause = add_arg(sql_where_clause, 'rssi != 0')
 
     if len(IGNORED) > 0:
         arg_list = ','.join(['?']*len(IGNORED))
-        sql_where_clause = '%s and mac.address not in (%s)' % (sql_where_clause, arg_list)
+        sql_where_clause = add_arg(sql_where_clause, 'mac.address not in (%s)' % (arg_list,))
         sql_args.extend(IGNORED)
 
     sql = '%s %s %s' % (sql_head, sql_where_clause, sql_tail)
