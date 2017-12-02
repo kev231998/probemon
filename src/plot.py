@@ -44,6 +44,7 @@ parser.add_argument('-m', '--mac', action='append', help='only display that mac'
 parser.add_argument('-p', '--privacy', action='store_true', default=False, help='merge LAA MAC address')
 parser.add_argument('-r', '--rssi', type=int, default=-99, help='minimal value for RSSI')
 parser.add_argument('-s', '--start', help='start timestamp')
+parser.add_argument('-t', '--timestamp', action='store_true', help='add a timestamp to the top right of image')
 args = parser.parse_args()
 
 if args.knownmac is not None:
@@ -215,6 +216,9 @@ if args.legend:
 space = 5*60 # 5 minutes
 ax.set_xlim(start_time-space, end_time+space)
 ax.set_ylim(-1, len(macs))
+# add a timestamp to the image
+if args.timestamp:
+    fig.text(0.905, 0.97, time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time())), fontsize=8, alpha=0.2)
 
 # and tada !
 if args.image:
