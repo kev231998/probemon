@@ -3,6 +3,8 @@
 /src/alert.sh
 /src/generate.sh
 /src/sniff.sh
+/src/shift-time.py
+/src/cron.sh
 /src/probemon.db
 /src/probemon.db-journal
 /rsync.sh
