@@ -3,6 +3,7 @@ import urllib2
 import argparse
 import time
 import sys
+import os.path
 
 # for correct handling of encoding when piping to less
 import codecs
@@ -111,6 +112,10 @@ def main():
         after = parse_ts(args.after)
     if args.before:
         before = parse_ts(args.before)
+
+    if not os.path.exists(args.db):
+        print 'Error: file not found %s' % args.db
+        sys.exit(-1)
 
     conn = sqlite3.connect(args.db)
     c = conn.cursor()

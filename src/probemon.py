@@ -10,6 +10,7 @@ from scapy.all import *
 import sqlite3
 import netaddr
 import base64
+import os.path
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
@@ -100,6 +101,10 @@ def main():
 
     if args.ignore is not None:
         IGNORED = args.ignore
+
+    if not os.path.exists(args.db):
+        print 'Error: file not found %s' % args.db
+        sys.exit(-1)
 
     conn = sqlite3.connect(args.db)
     c = conn.cursor()

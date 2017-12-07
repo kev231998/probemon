@@ -9,6 +9,7 @@ import matplotlib.patches as mpatches
 import argparse
 import sqlite3
 import sys
+import os.path
 
 NUMOFSECSINADAY = 60*60*24
 # standard colors without red and gray
@@ -49,6 +50,10 @@ args = parser.parse_args()
 
 if args.knownmac is not None:
     KNOWNMAC = args.knownmac
+
+if not os.path.exists(args.db):
+    print 'Error: file not found %s' % args.db
+    sys.exit(-1)
 
 # sqlite3
 conn = sqlite3.connect(args.db)
