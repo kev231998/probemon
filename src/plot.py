@@ -1,3 +1,5 @@
+#!/usr/bin/python2
+
 from datetime import datetime
 import time
 from cycler import cycler
