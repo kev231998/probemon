@@ -166,17 +166,17 @@ def main():
         v = macs[k]
         laa = ' (LAA)' if is_local_bit_set(k) else ''
         print 'MAC: %s%s, VENDOR: %s' % (k, laa, v['vendor'])
-        print '\tSSIDs: %s' % ','.join(sorted(v['ssid']))
+        print '  SSIDs: %s' % ','.join(sorted(v['ssid']))
         rssi = v['rssi']
         if rssi != []:
-            print '\tRSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
+            print '  RSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
                 len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
         else:
-            print '\tRSSI: Nothing found.'
+            print '  RSSI: Nothing found.'
 
         first = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['first']))
         last = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['last']))
-        print '\tFirst seen at %s and last seen at %s' % (first, last)
+        print '  First seen at %s and last seen at %s' % (first, last)
 
 if __name__ == '__main__':
     try:
