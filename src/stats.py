@@ -108,6 +108,10 @@ def main():
     parser.add_argument('-z', '--zero', action='store_true', help='filter rssi value of 0')
     args = parser.parse_args()
 
+    if args.day and (args.before or args.after):
+        print 'Error: --day conflicts with --after or --before'
+        return
+
     before = None
     after = None
     if args.after:
