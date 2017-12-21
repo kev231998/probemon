@@ -100,6 +100,7 @@ def main():
     parser.add_argument('-a', '--after', help='filter before this timestamp')
     parser.add_argument('-b', '--before', help='filter after this timestamp')
     parser.add_argument('-d', '--day', action='store_true', help='filter only for the past day')
+    parser.add_argument('--day-by-day', action='store_true', help='day by day stats for given mac')
     parser.add_argument('--db', default='probemon.db', help='file name of database')
     parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
     parser.add_argument('-m', '--mac', help='filter for that mac address')
@@ -111,6 +112,10 @@ def main():
     if args.day and (args.before or args.after):
         print 'Error: --day conflicts with --after or --before'
         return
+
+    if args.day_by_day and not args.mac:
+        print 'Error: --day-by-day needs a --mac switch'
+        sys.exit(-1)
 
     before = None
     after = None
@@ -137,6 +142,32 @@ def main():
                 m = '%s (LAA)' % m
             print '\t'.join([t, m, row[2], row[3], str(row[4])])
 
+        conn.close()
+        return
+
+    if args.day_by_day:
+        # gather stats day by day for args.mac
+        stats = {}
+        for row in c.fetchall():
+            day = time.strftime('%Y-%m-%d', time.localtime(row[0]))
+            if day in stats:
+                stats[day]['rssi'].append(row[4])
+                if row[0] > stats[day]['last']:
+                    stats[day]['last'] = row[0]
+                if row[0] < stats[day]['first']:
+                    stats[day]['first'] = row[0]
+            else:
+                stats[day] = {'rssi': [row[4]], 'first': row[0], 'last': row[0]}
+
+        days = sorted(stats.keys())
+        print 'MAC: %s, VENDOR: %s' % (row[1], row[2])
+        for d in days:
+            rssi = stats[d]['rssi']
+            first = time.strftime('%H:%M:%S', time.localtime(stats[d]['first']))
+            last = time.strftime('%H:%M:%S', time.localtime(stats[d]['last']))
+            print '  %s: [%s-%s]' % (d, first, last),
+            print '  RSSI: #: %4d, min: %d, max: %d, avg: %d, median: %d' % (
+                len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
         conn.close()
         return
 
