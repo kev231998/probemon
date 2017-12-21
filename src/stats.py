@@ -102,12 +102,17 @@ def main():
     parser.add_argument('-d', '--day', action='store_true', help='filter only for the past day')
     parser.add_argument('--day-by-day', action='store_true', help='day by day stats for given mac')
     parser.add_argument('--db', default='probemon.db', help='file name of database')
+    parser.add_argument('--list-mac-ssids', action='store_true', help='list ssid with mac that probed for it')
     parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
     parser.add_argument('-m', '--mac', help='filter for that mac address')
     parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
     parser.add_argument('-p', '--privacy', action='store_true', help='merge all LAA mac into one')
     parser.add_argument('-z', '--zero', action='store_true', help='filter rssi value of 0')
     args = parser.parse_args()
+
+    if args.list_mac_ssids:
+        args.mac = None
+        args.day_by_day = False
 
     if args.day and (args.before or args.after):
         print 'Error: --day conflicts with --after or --before'
@@ -171,6 +176,24 @@ def main():
         conn.close()
         return
 
+    if args.list_mac_ssids:
+        ssids = {}
+        for row in c.fetchall():
+            ssid = row[3]
+            if ssid == '' or is_local_bit_set(row[1]):
+                continue
+            if ssid not in ssids:
+                ssids[ssid] = set([row[1]])
+            else:
+                ssids[ssid].add(row[1])
+        si = sorted(ssids.items(), cmp=lambda x,y:cmp(len(x[1]), len(y[1])))
+        si.reverse()
+        for k,v in si:
+            if len(v) > 1:
+                print '%s: %s' % (k, ', '.join(v))
+
+        conn.close()
+        return
     # gather stats about each mac
     macs = {}
     for row in c.fetchall():
