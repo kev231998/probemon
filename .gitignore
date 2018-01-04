@@ -7,4 +7,4 @@
 /src/cron.sh
 /src/probemon.db
 /src/probemon.db-journal
-/rsync.sh
+/sync.sh
