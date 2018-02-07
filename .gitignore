@@ -1,6 +1,6 @@
 /archives/
 /src/www/
-/src/alert.sh
+/src/alert*.sh
 /src/generate.sh
 /src/sniff.sh
 /src/shift-time.py

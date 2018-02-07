@@ -10,6 +10,7 @@ from scapy.all import *
 import sqlite3
 import netaddr
 import base64
+from radiotap import radiotap_parse
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
@@ -65,11 +66,9 @@ def build_packet_cb(db, stdout):
         except IndexError:
             vendor = u'UNKNOWN'
 
-        # calculate RSSI value (might be [-4:-3] for you)
-        try:
-            rssi = -(256-ord(packet.notdecoded[-2:-1]))
-        except TypeError:
-            rssi = 0
+        # parse radiotap headers to get RSSI value
+        offset, headers = radiotap_parse(str(packet))
+        rssi = headers['dbm_antsignal']
 
         try:
             ssid = packet.info.decode('utf-8')
