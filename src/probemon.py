@@ -51,7 +51,12 @@ def insert_into_db(fields, db):
 
     c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
 
-    conn.commit()
+    try:
+        conn.commit()
+    except sqlite3.OperationalError as e:
+        # db is locked ? Retry again
+        time.sleep(10)
+        conn.commit()
     conn.close()
 
 def build_packet_cb(db, stdout):
