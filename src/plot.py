@@ -100,7 +100,7 @@ conn.close()
 macs = ts.keys()
 if args.mac :
     # keep mac with args.mac as substring
-    macs = [m for m in ts.keys() if any(am in m for am in args.mac)]
+    macs = [m for m in ts.keys() if any(am.lower() in m for am in args.mac)]
 
 # filter our data set based on min probe request or mac appearence
 for k,v in ts.items():
