@@ -1,10 +1,7 @@
 /archives/
 /src/www/
-/src/alert*.sh
-/src/generate.sh
-/src/sniff.sh
+/src/scripts/*
 /src/shift-time.py
-/src/cron.sh
 /src/probemon.db
 /src/probemon.db-journal
 /sync.sh
