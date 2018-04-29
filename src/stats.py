@@ -105,8 +105,9 @@ def main():
     parser.add_argument('--list-mac-ssids', action='store_true', help='list ssid with mac that probed for it')
     parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
     parser.add_argument('-m', '--mac', help='filter for that mac address')
-    parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
     parser.add_argument('-p', '--privacy', action='store_true', help='merge all LAA mac into one')
+    parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
+    parser.add_argument('-s', '--ssid', help='look up for mac that have probed for that ssid')
     parser.add_argument('-z', '--zero', action='store_true', help='filter rssi value of 0')
     args = parser.parse_args()
 
@@ -133,10 +134,27 @@ def main():
         print 'Error: file not found %s' % args.db
         sys.exit(-1)
 
+    if args.ssid and args.mac:
+        print ':: Ignoring --mac switch'
+        args.mac = None
+
     conn = sqlite3.connect(args.db)
     c = conn.cursor()
     sql, sql_args = build_sql_query(after, before, args.mac, args.rssi, args.zero, args.day)
     c.execute(sql, sql_args)
+
+    if args.ssid:
+        # search for mac that have probed that ssid
+        macs = set()
+        if args.privacy:
+            print ':: Ignoring LAA address'
+        for row in c.fetchall():
+            if row[3] == args.ssid:
+                if args.privacy and is_local_bit_set(row[1]):
+                    continue
+                macs.add(row[1])
+        print '%s: %s' % (args.ssid, ', '.join(macs))
+        return
 
     if args.log:
         # simply output each log entry to stdout
