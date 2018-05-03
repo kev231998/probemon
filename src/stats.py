@@ -47,7 +47,7 @@ def parse_ts(ts):
             sys.exit(-1)
     return t
 
-def build_sql_query(after, before, mac, rssi, zero, day):
+def build_sql_query(after, before, macs, rssi, zero, day):
     sql_head = '''select date,mac.address,vendor.name,ssid.name,rssi from probemon
     inner join mac on mac.id=probemon.mac
     inner join vendor on vendor.id=mac.vendor
@@ -57,20 +57,23 @@ def build_sql_query(after, before, mac, rssi, zero, day):
     sql_where_clause = ''
     sql_args = []
 
-    def add_arg(clause, new_arg):
+    def add_arg(clause, op, new_arg):
         if clause == '':
-            clause = 'where %s' % new_arg
+            clause = '%s' % new_arg
         else:
-            clause = '%s and %s' % (clause, new_arg)
+            clause = '%s %s %s' % (clause, op, new_arg)
         return clause
 
-    if mac:
-        if len(mac) != 17:
-            mac = '%s%%' % mac
-        sql_where_clause = add_arg(sql_where_clause, 'mac.address like ?')
-        sql_args.append(mac)
+    if macs:
+        for mac in macs:
+            if len(mac) != 17:
+                mac = '%s%%' % mac
+            sql_where_clause = add_arg(sql_where_clause, 'or', 'mac.address like ?')
+            sql_args.append(mac)
+        if len(macs) > 1:
+            sql_where_clause = '(%s)' % sql_where_clause
     if rssi:
-        sql_where_clause = add_arg(sql_where_clause, 'rssi>?')
+        sql_where_clause = add_arg(sql_where_clause, 'and', 'rssi>?')
         sql_args.append(rssi)
 
     if day:
@@ -78,21 +81,21 @@ def build_sql_query(after, before, mac, rssi, zero, day):
         after = before - NUMOFSECSINADAY # since one day in the past
 
     if after is not None:
-        sql_where_clause = add_arg(sql_where_clause, 'date>?')
+        sql_where_clause = add_arg(sql_where_clause, 'and', 'date>?')
         sql_args.append(after)
     if before is not None:
-        sql_where_clause = add_arg(sql_where_clause, 'date<?')
+        sql_where_clause = add_arg(sql_where_clause, 'and', 'date<?')
         sql_args.append(before)
 
     if zero:
-        sql_where_clause = add_arg(sql_where_clause, 'rssi != 0')
+        sql_where_clause = add_arg(sql_where_clause, 'and', 'rssi != 0')
 
     if len(IGNORED) > 0:
         arg_list = ','.join(['?']*len(IGNORED))
-        sql_where_clause = add_arg(sql_where_clause, 'mac.address not in (%s)' % (arg_list,))
+        sql_where_clause = add_arg(sql_where_clause, 'and', 'mac.address not in (%s)' % (arg_list,))
         sql_args.extend(IGNORED)
 
-    sql = '%s %s %s' % (sql_head, sql_where_clause, sql_tail)
+    sql = '%s where %s %s' % (sql_head, sql_where_clause, sql_tail)
     return sql, sql_args
 
 def main():
@@ -104,7 +107,7 @@ def main():
     parser.add_argument('--db', default='probemon.db', help='file name of database')
     parser.add_argument('--list-mac-ssids', action='store_true', help='list ssid with mac that probed for it')
     parser.add_argument('-l', '--log', action='store_true', help='log all entries instead of showing stats')
-    parser.add_argument('-m', '--mac', help='filter for that mac address')
+    parser.add_argument('-m', '--mac', action='append', help='filter for that mac address')
     parser.add_argument('-p', '--privacy', action='store_true', help='merge all LAA mac into one')
     parser.add_argument('-r', '--rssi', type=int, help='filter for that minimal RSSI value')
     parser.add_argument('-s', '--ssid', help='look up for mac that have probed for that ssid')
