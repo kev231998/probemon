@@ -16,6 +16,7 @@ from signal import signal, SIGPIPE, SIG_DFL
 signal(SIGPIPE, SIG_DFL)
 
 NUMOFSECSINADAY = 60*60*24
+MAX_VENDOR_LENGTH = 25
 
 # read config variable from config.txt file
 with open('config.txt') as f:
@@ -161,12 +162,18 @@ def main():
 
     if args.log:
         # simply output each log entry to stdout
-        for row in c.fetchall():
-            t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(row[0]))
-            m = row[1]
+        for t, m, mc, ssid, rssi in c.fetchall():
+            t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t))
             if is_local_bit_set(m):
                 m = '%s (LAA)' % m
-            print '\t'.join([t, m, row[2], row[3], str(row[4])])
+            # strip mac vendor string to MAX_VENDOR_LENGTH chars, left padded with space
+            if len(mc) > MAX_VENDOR_LENGTH:
+                mc = mc[:MAX_VENDOR_LENGTH-3]+ '...'
+            else:
+                mc = mc.ljust(MAX_VENDOR_LENGTH)
+            if ssid == '':
+                ssid = '\t'
+            print '\t'.join([t, m, mc, ssid, str(rssi)])
 
         conn.close()
         return
