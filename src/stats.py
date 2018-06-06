@@ -17,6 +17,7 @@ signal(SIGPIPE, SIG_DFL)
 
 NUMOFSECSINADAY = 60*60*24
 MAX_VENDOR_LENGTH = 25
+MAX_SSID_LENGTH = 15
 
 # read config variable from config.txt file
 with open('config.txt') as f:
@@ -171,8 +172,11 @@ def main():
                 mc = mc[:MAX_VENDOR_LENGTH-3]+ '...'
             else:
                 mc = mc.ljust(MAX_VENDOR_LENGTH)
-            if ssid == '':
-                ssid = '\t'
+            # do the same for ssid
+            if len(ssid) > MAX_SSID_LENGTH:
+                ssid = ssid[:MAX_SSID_LENGTH-3]+ '...'
+            else:
+                ssid = ssid.ljust(MAX_SSID_LENGTH)
             print '\t'.join([t, m, mc, ssid, str(rssi)])
 
         conn.close()
