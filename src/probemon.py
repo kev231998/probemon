@@ -59,7 +59,7 @@ def insert_into_db(fields, db):
         conn.commit()
     conn.close()
 
-def build_packet_cb(db, stdout):
+def build_packet_cb(db, stdout, ignored):
     def packet_callback(packet):
         now = time.time()
         # look up vendor from OUI value in MAC address
@@ -83,7 +83,7 @@ def build_packet_cb(db, stdout):
             ssid = u'b64_%s' % base64.b64encode(packet.info)
         fields = [now, packet.addr2, vendor, ssid, rssi]
 
-        if packet.addr2 not in IGNORED:
+        if packet.addr2 not in ignored:
             insert_into_db(fields, db)
 
             if stdout:
@@ -131,7 +131,8 @@ def main():
     # sniff on specified channel
     os.system('iwconfig %s channel %d' % (args.interface, args.channel))
 
-    sniff(iface=args.interface, prn=build_packet_cb(args.db, args.stdout),
+    print ":: Started listening to probe requests on channel %d on interface %s" % (args.channel, args.interface)
+    sniff(iface=args.interface, prn=build_packet_cb(args.db, args.stdout, IGNORED),
         store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
 
 if __name__ == '__main__':
