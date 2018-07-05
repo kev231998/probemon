@@ -92,6 +92,7 @@ def build_sql_query(after, before, macs, rssi, zero, day):
     if zero:
         sql_where_clause = add_arg(sql_where_clause, 'and', 'rssi != 0')
 
+    global IGNORED
     if len(IGNORED) > 0:
         arg_list = ','.join(['?']*len(IGNORED))
         sql_where_clause = add_arg(sql_where_clause, 'and', 'mac.address not in (%s)' % (arg_list,))
