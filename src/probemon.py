@@ -11,10 +11,15 @@ import sqlite3
 import netaddr
 import base64
 from radiotap import radiotap_parse
+from lru import LRU
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 VERSION = '0.2'
+
+mac_cache = LRU(128)
+ssid_cache = LRU(128)
+vendor_cache = LRU(128)
 
 # read config variable from config.txt file
 with open('config.txt') as f:
@@ -25,29 +30,41 @@ def insert_into_db(fields, db):
     conn = sqlite3.connect(db)
     c = conn.cursor()
 
-    c.execute('select id from vendor where name=?', (vendor,))
-    row = c.fetchone()
-    if row is None:
-        c.execute('insert into vendor (name) values(?)', (vendor,))
+    try:
+        vendor_id = vendor_cache[vendor]
+    except KeyError:
         c.execute('select id from vendor where name=?', (vendor,))
         row = c.fetchone()
-    vendor_id = row[0]
+        if row is None:
+            c.execute('insert into vendor (name) values(?)', (vendor,))
+            c.execute('select id from vendor where name=?', (vendor,))
+            row = c.fetchone()
+        vendor_id = row[0]
+        vendor_cache[vendor] = vendor_id
 
-    c.execute('select id from mac where address=?', (mac,))
-    row = c.fetchone()
-    if row is None:
-        c.execute('insert into mac (address,vendor) values(?, ?)', (mac, vendor_id))
+    try:
+        mac_id = mac_cache[mac]
+    except KeyError:
         c.execute('select id from mac where address=?', (mac,))
         row = c.fetchone()
-    mac_id = row[0]
+        if row is None:
+            c.execute('insert into mac (address,vendor) values(?, ?)', (mac, vendor_id))
+            c.execute('select id from mac where address=?', (mac,))
+            row = c.fetchone()
+        mac_id = row[0]
+        mac_cache[mac] = mac_id
 
-    c.execute('select id from ssid where name=?', (ssid,))
-    row = c.fetchone()
-    if row is None:
-        c.execute('insert into ssid (name) values(?)', (ssid,))
+    try:
+        ssid_id = ssid_cache[ssid]
+    except KeyError:
         c.execute('select id from ssid where name=?', (ssid,))
         row = c.fetchone()
-    ssid_id = row[0]
+        if row is None:
+            c.execute('insert into ssid (name) values(?)', (ssid,))
+            c.execute('select id from ssid where name=?', (ssid,))
+            row = c.fetchone()
+        ssid_id = row[0]
+        ssid_cache[ssid] = ssid_id
 
     c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
 
