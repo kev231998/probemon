@@ -1,4 +1,0 @@
-[submodule "python-radiotap"]
-	path = python-radiotap
-	url = https://github.com/radiotap/python-radiotap.git
-	ignore = dirty

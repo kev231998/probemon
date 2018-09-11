@@ -10,7 +10,6 @@ from scapy.all import *
 import sqlite3
 import netaddr
 import base64
-from radiotap import radiotap_parse
 from lru import LRU
 
 NAME = 'probemon'
@@ -88,9 +87,14 @@ def build_packet_cb(db, stdout, ignored):
         except IndexError:
             vendor = u'UNKNOWN'
 
-        # parse radiotap headers to get RSSI value
-        offset, headers = radiotap_parse(str(packet))
-        rssi = headers['dbm_antsignal']
+        # parse headers to get RSSI value
+        try:
+            rssi = -(256-ord(packet.notdecoded[-2:-1]))
+        except TypeError:
+            try:
+                rssi = -(256-ord(packet.notdecoded[-4:-3]))
+            except TypeError:
+                rssi = 0
 
         try:
             ssid = packet.info.decode('utf-8')
