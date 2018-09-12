@@ -6,7 +6,6 @@ from datetime import datetime
 import argparse
 import sys
 import os
-from scapy.all import *
 import sqlite3
 import netaddr
 import base64
@@ -14,7 +13,7 @@ from lru import LRU
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
-VERSION = '0.2'
+VERSION = '0.3'
 
 mac_cache = LRU(128)
 ssid_cache = LRU(128)
@@ -24,10 +23,8 @@ vendor_cache = LRU(128)
 with open('config.txt') as f:
     exec('\n'.join(f.readlines()))
 
-def insert_into_db(fields, db):
+def insert_into_db(fields, conn, c):
     date, mac, vendor, ssid, rssi = fields
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
 
     try:
         vendor_id = vendor_cache[vendor]
@@ -73,9 +70,8 @@ def insert_into_db(fields, db):
         # db is locked ? Retry again
         time.sleep(10)
         conn.commit()
-    conn.close()
 
-def build_packet_cb(db, stdout, ignored):
+def build_packet_cb(conn, c, stdout, ignored):
     def packet_callback(packet):
         now = time.time()
         # look up vendor from OUI value in MAC address
@@ -105,7 +101,7 @@ def build_packet_cb(db, stdout, ignored):
         fields = [now, packet.addr2, vendor, ssid, rssi]
 
         if packet.addr2 not in ignored:
-            insert_into_db(fields, db)
+            insert_into_db(fields, conn, c)
 
             if stdout:
                 # convert time to iso
@@ -114,21 +110,7 @@ def build_packet_cb(db, stdout, ignored):
 
     return packet_callback
 
-def main():
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
-    parser.add_argument('-c', '--channel', default=1, type=int, help="the channel to listen on")
-    parser.add_argument('-d', '--db', default='probemon.db', help="database file name to use")
-    parser.add_argument('-i', '--interface', required=True, help="the capture interface to use")
-    parser.add_argument('-I', '--ignore', action='append', help="mac address to ignore")
-    parser.add_argument('-s', '--stdout', action='store_true', default=False, help="also log probe request to stdout")
-    args = parser.parse_args()
-
-    global IGNORED
-    if args.ignore is not None:
-        IGNORED = args.ignore
-
-    conn = sqlite3.connect(args.db)
-    c = conn.cursor()
+def init_db(conn, c):
     # create tables if they do not exist
     sql = 'create table if not exists vendor(id integer not null primary key, name text)'
     c.execute(sql)
@@ -148,19 +130,39 @@ def main():
         )'''
     c.execute(sql)
     conn.commit()
-    conn.close()
 
+def main():
     # sniff on specified channel
-    os.system('iwconfig %s channel %d' % (args.interface, args.channel))
+    os.system('iw dev %s set channel %d' % (args.interface, args.channel))
 
     print ":: Started listening to probe requests on channel %d on interface %s" % (args.channel, args.interface)
-    sniff(iface=args.interface, prn=build_packet_cb(args.db, args.stdout, IGNORED),
+    sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, IGNORED),
         store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
 
 if __name__ == '__main__':
     try:
+        parser = argparse.ArgumentParser(description=DESCRIPTION)
+        parser.add_argument('-c', '--channel', default=1, type=int, help="the channel to listen on")
+        parser.add_argument('-d', '--db', default='probemon.db', help="database file name to use")
+        parser.add_argument('-i', '--interface', required=True, help="the capture interface to use")
+        parser.add_argument('-I', '--ignore', action='append', help="mac address to ignore")
+        parser.add_argument('-s', '--stdout', action='store_true', default=False, help="also log probe request to stdout")
+        args = parser.parse_args()
+
+        global IGNORED
+        if args.ignore is not None:
+            IGNORED = args.ignore
+
+        # only import scapy here to avoid delay if error in argument parsing
+        from scapy.all import *
+
+        conn = sqlite3.connect(args.db)
+        c = conn.cursor()
+        init_db(conn, c)
+
         main()
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
+        # TODO: conn.close()
         pass
 
 # vim: set et ts=4 sw=4:
