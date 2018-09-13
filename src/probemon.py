@@ -10,6 +10,7 @@ import sqlite3
 import netaddr
 import base64
 from lru import LRU
+import atexit
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
@@ -131,6 +132,9 @@ def init_db(conn, c):
     c.execute(sql)
     conn.commit()
 
+def close_db(conn):
+    conn.close()
+
 def main():
     # sniff on specified channel
     os.system('iw dev %s set channel %d' % (args.interface, args.channel))
@@ -158,6 +162,7 @@ if __name__ == '__main__':
 
         conn = sqlite3.connect(args.db)
         c = conn.cursor()
+        atexit.register(close_db, conn)
         init_db(conn, c)
 
         main()
