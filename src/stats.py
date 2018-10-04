@@ -1,7 +1,6 @@
 #!/usr/bin/python2
 
 import sqlite3
-import urllib2
 import argparse
 import time
 import sys
