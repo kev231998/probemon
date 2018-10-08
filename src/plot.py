@@ -90,7 +90,12 @@ sql = '''select date,mac.address,rssi from probemon
     and mac.address not in (%s)
     and rssi > ?
     order by date''' % (arg_list,)
-for row in c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,)):
+try:
+    c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,))
+except sqlite3.OperationalError as e:
+    time.sleep(2)
+    c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,))
+for row in c.fetchall():
     if row[1] in ts:
         ts[row[1]].append(row[0])
     else:

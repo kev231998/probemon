@@ -146,7 +146,11 @@ def main():
     conn = sqlite3.connect(args.db)
     c = conn.cursor()
     sql, sql_args = build_sql_query(after, before, args.mac, args.rssi, args.zero, args.day)
-    c.execute(sql, sql_args)
+    try:
+        c.execute(sql, sql_args)
+    except sqlite3.OperationalError as e:
+        time.sleep(2)
+        c.execute(sql, sql_args)
 
     if args.ssid:
         # search for mac that have probed that ssid
