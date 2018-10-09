@@ -12,6 +12,7 @@ import argparse
 import sqlite3
 import sys
 import os.path
+import re
 
 NUMOFSECSINADAY = 60*60*24
 # standard colors without red and gray
@@ -102,10 +103,19 @@ for row in c.fetchall():
         ts[row[1]] = [row[0]]
 conn.close()
 
+def match(m, s):
+    # match on start of mac address and use % as wild-card like in SQL syntax
+    if '%' in m:
+        m = m.replace('%', '.*')
+    else:
+        m = m+'.*'
+    m = '^'+m
+    return re.search(m, s) is not None
+
 macs = ts.keys()
 if args.mac :
     # keep mac with args.mac as substring
-    macs = [m for m in ts.keys() if any(am.lower() in m for am in args.mac)]
+    macs = [m for m in ts.keys() if any(match(am.lower(), m) for am in args.mac)]
 
 # filter our data set based on min probe request or mac appearence
 for k,v in ts.items():
