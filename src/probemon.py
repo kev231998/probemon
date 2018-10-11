@@ -12,6 +12,9 @@ import base64
 from lru import LRU
 import atexit
 
+# read config variable from config.py file
+from config import *
+
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 VERSION = '0.3'
@@ -19,10 +22,6 @@ VERSION = '0.3'
 mac_cache = LRU(128)
 ssid_cache = LRU(128)
 vendor_cache = LRU(128)
-
-# read config variable from config.txt file
-with open('config.txt') as f:
-    exec('\n'.join(f.readlines()))
 
 def insert_into_db(fields, conn, c):
     date, mac, vendor, ssid, rssi = fields

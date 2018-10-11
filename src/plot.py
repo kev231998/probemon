@@ -19,6 +19,10 @@ NUMOFSECSINADAY = 60*60*24
 COLORS = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple',
     'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']
 
+# read config variable from config.py file
+from config import *
+MERGED = (m[:8] for m in MERGED)
+
 # draws a rectangle as custom legend handler
 class MyLine2DHandler(object):
     def legend_artist(self, legend, orig_handle, fontsize, handlebox):
@@ -27,11 +31,6 @@ class MyLine2DHandler(object):
         patch = mpatches.Rectangle([x0, y0], width, height, facecolor=orig_handle.get_color())
         handlebox.add_artist(patch)
         return patch
-
-# read config variable from config.txt file
-with open('config.txt') as f:
-    exec('\n'.join(f.readlines()))
-MERGED = (m[:8] for m in MERGED)
 
 def is_local_bit_set(mac):
     byte = mac.split(':')

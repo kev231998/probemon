@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 KNOWNMAC = ('xx:xx:xx:xx:xx:xx')
 MYDEVICES = ('xx:xx:xx:xx:xx:xx',
 )
