@@ -86,6 +86,8 @@ def build_packet_cb(conn, c, stdout, ignored):
         # parse headers to get RSSI value
         try:
             rssi = -(256-ord(packet.notdecoded[-2:-1]))
+            if rssi == -256:
+                rssi = -(256-ord(packet.notdecoded[-4:-3]))
         except TypeError:
             try:
                 rssi = -(256-ord(packet.notdecoded[-4:-3]))
@@ -143,6 +145,7 @@ def main():
         store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
 
 if __name__ == '__main__':
+    conn = None
     try:
         parser = argparse.ArgumentParser(description=DESCRIPTION)
         parser.add_argument('-c', '--channel', default=1, type=int, help="the channel to listen on")
@@ -168,6 +171,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt as e:
         pass
     finally:
-        conn.close()
+        if conn is not None:
+            conn.close()
 
 # vim: set et ts=4 sw=4:

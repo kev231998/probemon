@@ -5,3 +5,4 @@
 /src/probemon.db
 /src/probemon.db-journal
 /sync.sh
+*.pyc
