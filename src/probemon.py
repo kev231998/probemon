@@ -28,7 +28,7 @@ def insert_into_db(fields, conn, c):
 
     try:
         vendor_id = vendor_cache[vendor]
-    except KeyError:
+    except KeyError as k:
         c.execute('select id from vendor where name=?', (vendor,))
         row = c.fetchone()
         if row is None:
@@ -40,7 +40,7 @@ def insert_into_db(fields, conn, c):
 
     try:
         mac_id = mac_cache[mac]
-    except KeyError:
+    except KeyError as k:
         c.execute('select id from mac where address=?', (mac,))
         row = c.fetchone()
         if row is None:
@@ -52,7 +52,7 @@ def insert_into_db(fields, conn, c):
 
     try:
         ssid_id = ssid_cache[ssid]
-    except KeyError:
+    except KeyError as k:
         c.execute('select id from ssid where name=?', (ssid,))
         row = c.fetchone()
         if row is None:
@@ -78,9 +78,9 @@ def build_packet_cb(conn, c, stdout, ignored):
         try:
             parsed_mac = netaddr.EUI(packet.addr2)
             vendor = parsed_mac.oui.registration().org
-        except netaddr.core.NotRegisteredError, e:
+        except netaddr.core.NotRegisteredError as e:
             vendor = u'UNKNOWN'
-        except IndexError:
+        except IndexError as e:
             vendor = u'UNKNOWN'
 
         # parse headers to get RSSI value
@@ -88,15 +88,15 @@ def build_packet_cb(conn, c, stdout, ignored):
             rssi = -(256-ord(packet.notdecoded[-2:-1]))
             if rssi == -256:
                 rssi = -(256-ord(packet.notdecoded[-4:-3]))
-        except TypeError:
+        except TypeError as e:
             try:
                 rssi = -(256-ord(packet.notdecoded[-4:-3]))
-            except TypeError:
+            except TypeError as f:
                 rssi = 0
 
         try:
             ssid = packet.info.decode('utf-8')
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as u:
             # encode the SSID in base64 because it will fail
             # to be inserted into the db otherwise
             ssid = u'b64_%s' % base64.b64encode(packet.info)
@@ -160,6 +160,7 @@ if __name__ == '__main__':
             IGNORED = args.ignore
 
         # only import scapy here to avoid delay if error in argument parsing
+        print 'Loading scapy...'
         from scapy.all import *
 
         conn = sqlite3.connect(args.db)
