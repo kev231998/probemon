@@ -23,6 +23,17 @@ mac_cache = LRU(128)
 ssid_cache = LRU(128)
 vendor_cache = LRU(128)
 
+class Colors:
+    red = '\033[31m'
+    green = '\033[32m'
+    yellow = '\033[33m'
+    blue = '\033[34m'
+    magenta = '\033[35m'
+    cyan = '\033[36m'
+    endc = '\033[0m'
+    bold = '\033[1m'
+    underline = '\033[4m'
+
 def insert_into_db(fields, conn, c):
     date, mac, vendor, ssid, rssi = fields
 
@@ -106,6 +117,8 @@ def build_packet_cb(conn, c, stdout, ignored):
             insert_into_db(fields, conn, c)
 
             if stdout:
+                if fields[1] in KNOWNMAC:
+                    fields[1] = u'%s%s%s%s' % (Colors.bold, Colors.red, fields[1], Colors.endc)
                 # convert time to iso
                 fields[0] = str(datetime.fromtimestamp(now))[:-3].replace(' ','T')
                 print '\t'.join(str(i) for i in fields)
