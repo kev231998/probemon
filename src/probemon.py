@@ -168,13 +168,12 @@ if __name__ == '__main__':
         parser.add_argument('-s', '--stdout', action='store_true', default=False, help="also log probe request to stdout")
         args = parser.parse_args()
 
-        global IGNORED
         if args.ignore is not None:
             IGNORED = args.ignore
 
         # only import scapy here to avoid delay if error in argument parsing
         print 'Loading scapy...'
-        from scapy.all import *
+        from scapy.all import sniff, Dot11ProbeReq
 
         conn = sqlite3.connect(args.db)
         c = conn.cursor()
