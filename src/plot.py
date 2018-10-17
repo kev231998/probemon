@@ -36,7 +36,7 @@ def is_local_bit_set(mac):
     byte = mac.split(':')
     return int(byte[0], 16) & 0b00000010 == 0b00000010
 
-parser = argparse.ArgumentParser(description='Plot MAC presence from probe request sniff')
+parser = argparse.ArgumentParser(description='Plot MAC presence from probe requests in the database')
 parser.add_argument('-b', '--db', default='probemon.db', help='file name of the db')
 parser.add_argument('-d', '--days', type=int, default=1, help='number of days to keep')
 parser.add_argument('-i', '--image', default=None, const='plot.png', nargs='?', help='output an image')

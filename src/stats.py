@@ -100,7 +100,7 @@ def build_sql_query(after, before, macs, rssi, zero, day):
     return sql, sql_args
 
 def main():
-    parser = argparse.ArgumentParser(description='Find RSSI stats for a given mac')
+    parser = argparse.ArgumentParser(description='Display various stats about mac addresses/probe requests in the database')
     parser.add_argument('-a', '--after', help='filter before this timestamp')
     parser.add_argument('-b', '--before', help='filter after this timestamp')
     parser.add_argument('-d', '--day', action='store_true', help='filter only for the past day')
