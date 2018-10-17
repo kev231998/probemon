@@ -2,7 +2,6 @@
 # -*- encoding: utf-8 -*-
 
 import time
-from datetime import datetime
 import argparse
 import sys
 import os
@@ -18,6 +17,8 @@ from config import *
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
 VERSION = '0.3'
+MAX_VENDOR_LENGTH = 25
+MAX_SSID_LENGTH = 15
 
 mac_cache = LRU(128)
 ssid_cache = LRU(128)
@@ -120,8 +121,20 @@ def build_packet_cb(conn, c, stdout, ignored):
                 if fields[1] in KNOWNMAC:
                     fields[1] = u'%s%s%s%s' % (Colors.bold, Colors.red, fields[1], Colors.endc)
                 # convert time to iso
-                fields[0] = str(datetime.fromtimestamp(now))[:-3].replace(' ','T')
-                print '\t'.join(str(i) for i in fields)
+                fields[0] = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(now))
+                # strip mac vendor string to MAX_VENDOR_LENGTH chars, left padded with space
+                if len(vendor) > MAX_VENDOR_LENGTH:
+                    vendor = vendor[:MAX_VENDOR_LENGTH-3]+ '...'
+                else:
+                    vendor = vendor.ljust(MAX_VENDOR_LENGTH)
+                # do the same for ssid
+                if len(ssid) > MAX_SSID_LENGTH:
+                    ssid = ssid[:MAX_SSID_LENGTH-3]+ '...'
+                else:
+                    ssid = ssid.ljust(MAX_SSID_LENGTH)
+                fields[2] = vendor
+                fields[3] = ssid
+                print u'%s\t%s\t%s\t%s\t%d' % tuple(fields)
 
     return packet_callback
 
