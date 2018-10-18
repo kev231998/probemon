@@ -40,6 +40,7 @@ parser = argparse.ArgumentParser(description='Plot MAC presence from probe reque
 parser.add_argument('-b', '--db', default='probemon.db', help='file name of the db')
 parser.add_argument('-i', '--image', default=None, const='plot.png', nargs='?', help='output an image')
 parser.add_argument('-l', '--legend', action='store_true', default=False, help='add a legend')
+parser.add_argument('--label', action='store_true', default=False, help='add a mac label for each plot')
 parser.add_argument('-k', '--knownmac', action='append', help='known mac to highlight in red')
 parser.add_argument('-M', '--min', type=int, default=3, help='minimum number of probe requests to consider')
 parser.add_argument('-m', '--mac', action='append', help='only display that mac')
@@ -201,6 +202,8 @@ for i,p in enumerate(times):
         line, = ax.plot(p, q, color='tab:gray', label=label)
     else:
         line, = ax.plot(p, q, label=label)
+        if args.label:
+            ax.text(end_time, q[-1], label, fontsize=8, color='black', horizontalalignment='right', verticalalignment='top', family='monospace')
     lines.append(line)
 
 # add a grey background on period greater than 15 minutes without data
