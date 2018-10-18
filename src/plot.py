@@ -38,7 +38,6 @@ def is_local_bit_set(mac):
 
 parser = argparse.ArgumentParser(description='Plot MAC presence from probe requests in the database')
 parser.add_argument('-b', '--db', default='probemon.db', help='file name of the db')
-parser.add_argument('-d', '--days', type=int, default=1, help='number of days to keep')
 parser.add_argument('-i', '--image', default=None, const='plot.png', nargs='?', help='output an image')
 parser.add_argument('-l', '--legend', action='store_true', default=False, help='add a legend')
 parser.add_argument('-k', '--knownmac', action='append', help='known mac to highlight in red')
@@ -47,8 +46,26 @@ parser.add_argument('-m', '--mac', action='append', help='only display that mac'
 parser.add_argument('-p', '--privacy', action='store_true', default=False, help='merge LAA MAC address')
 parser.add_argument('-r', '--rssi', type=int, default=-99, help='minimal value for RSSI')
 parser.add_argument('-s', '--start', help='start timestamp')
+parser.add_argument('--span-time', default='1d', help='span of time (coud be #d or ##h or ###m)')
 parser.add_argument('-t', '--timestamp', action='store_true', help='add a timestamp to the top right of image')
 args = parser.parse_args()
+
+# parse span_time
+span = args.span_time[-1:]
+try:
+    sp = int(args.span_time[:-1])
+except ValueError:
+    print 'Error: --span-time argument should be of the form [digit]...[d|h|m]'
+    sys.exit(-1)
+if span == 'd':
+    args.span_time = sp*NUMOFSECSINADAY
+elif span == 'h':
+    args.span_time = sp*60*60
+elif span == 'm':
+    args.span_time = sp*60
+else:
+    print 'Error: --span-time postfix could only be d or h or m'
+    sys.exit(-1)
 
 if args.knownmac is not None:
     KNOWNMAC = args.knownmac
@@ -73,12 +90,12 @@ if args.start:
             print "Error: can't parse date timestamp"
             conn.close()
             sys.exit(-1)
-    end_time = start_time + NUMOFSECSINADAY*args.days
+    end_time = start_time + args.span_time
 else:
     #c.execute('select max(date) from probemon')
     #end_time = c.fetchone()[0]
     end_time = time.time()
-    start_time = end_time - NUMOFSECSINADAY*args.days
+    start_time = end_time - args.span_time
 
 # keep only the data between 2 timestamps ignoring IGNORED macs with rssi
 # greater than the min value
@@ -200,6 +217,8 @@ def showdate(tick, pos):
     return time.strftime('%Y-%m-%d', time.localtime(tick))
 def showtime(tick, pos):
     return time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(tick))
+def showhourminute(tick, pos):
+    return time.strftime('%H:%M', time.localtime(tick))
 def showhour(tick, pos):
     return time.strftime('%Hh', time.localtime(tick))
 def showmac(tick, pos):
@@ -214,9 +233,27 @@ def showmac(tick, pos):
 ## customize the appearence of our figure/plot
 # customize label of major/minor ticks
 ax.xaxis.set_major_formatter(ticker.FuncFormatter(showdate))
-ax.xaxis.set_minor_formatter(ticker.FuncFormatter(showhour))
-# show minor tick every hour
-ax.xaxis.set_minor_locator(ticker.MultipleLocator((args.days*24*60*60)/24))
+if span == 'd':
+    # show minor tick every hour
+    ax.xaxis.set_minor_formatter(ticker.FuncFormatter(showhour))
+    ax.xaxis.set_minor_locator(ticker.MultipleLocator(60*60))
+elif span == 'h':
+    # show minor tick every x minutes
+    ax.xaxis.set_minor_formatter(ticker.FuncFormatter(showhourminute))
+    h = args.span_time/3600
+    sm = 10*60
+    if h > 2:
+        sm = 15*60
+    if h > 6:
+        sm = 30*60
+    if h > 12:
+        sm = 60*60
+    ax.xaxis.set_minor_locator(ticker.MultipleLocator(sm))
+elif span == 'm':
+    # show minor tick every 5 minutes
+    ax.xaxis.set_minor_formatter(ticker.FuncFormatter(showhourminute))
+    ax.xaxis.set_minor_locator(ticker.MultipleLocator(5*60))
+
 # show only integer evenly spaced on y axis
 #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, steps=[1,2,4,5,10]))
 # don't draw y axis
