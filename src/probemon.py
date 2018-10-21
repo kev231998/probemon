@@ -3,8 +3,8 @@
 
 import time
 import argparse
+import subprocess
 import sys
-import os
 import sqlite3
 import netaddr
 import base64
@@ -164,7 +164,12 @@ def close_db(conn):
 
 def main():
     # sniff on specified channel
-    os.system('iw dev %s set channel %d' % (args.interface, args.channel))
+    cmd = 'iw dev %s set channel %d' % (args.interface, args.channel)
+    try:
+        subprocess.check_call(cmd.split(' '))
+    except subprocess.CalledProcessError:
+        print 'Error: failed to switch to channel %d in interface %s' % (args.channel, args.interface)
+        sys.exit(-1)
 
     print ":: Started listening to probe requests on channel %d on interface %s" % (args.channel, args.interface)
     sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, IGNORED),
