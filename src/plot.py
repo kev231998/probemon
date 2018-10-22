@@ -202,8 +202,8 @@ for i,p in enumerate(times):
         line, = ax.plot(p, q, color='tab:gray', label=label)
     else:
         line, = ax.plot(p, q, label=label)
-        if args.label:
-            ax.text(end_time, q[-1], label, fontsize=8, color='black', horizontalalignment='right', verticalalignment='top', family='monospace')
+    if args.label:
+        ax.text(end_time, q[-1], label, fontsize=8, color='black', horizontalalignment='right', verticalalignment='center', family='monospace')
     lines.append(line)
 
 # add a grey background on period greater than 15 minutes without data
