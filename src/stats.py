@@ -189,26 +189,32 @@ def main():
         # gather stats day by day for args.mac
         stats = {}
         for row in c.fetchall():
+            if row[1] not in stats.keys():
+                stats[row[1]] = {'vendor': row[2]}
             day = time.strftime('%Y-%m-%d', time.localtime(row[0]))
-            if day in stats:
-                stats[day]['rssi'].append(row[4])
-                if row[0] > stats[day]['last']:
-                    stats[day]['last'] = row[0]
-                if row[0] < stats[day]['first']:
-                    stats[day]['first'] = row[0]
+            if day in stats[row[1]]:
+                smd = stats[row[1]][day]
+                smd['rssi'].append(row[4])
+                if row[0] > smd['last']:
+                    smd['last'] = row[0]
+                if row[0] < smd['first']:
+                    smd['first'] = row[0]
             else:
-                stats[day] = {'rssi': [row[4]], 'first': row[0], 'last': row[0]}
-
-        days = sorted(stats.keys())
-        print 'MAC: %s, VENDOR: %s' % (row[1], row[2])
-        for d in days:
-            rssi = stats[d]['rssi']
-            first = time.strftime('%H:%M:%S', time.localtime(stats[d]['first']))
-            last = time.strftime('%H:%M:%S', time.localtime(stats[d]['last']))
-            print '  %s: [%s-%s]' % (d, first, last),
-            print '  RSSI: #: %4d, min: %d, max: %d, avg: %d, median: %d' % (
-                len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
+                stats[row[1]][day] = {'rssi': [row[4]], 'first': row[0], 'last': row[0]}
         conn.close()
+
+        for mac in stats.keys():
+            vendor = stats[mac]['vendor']
+            del stats[mac]['vendor']
+            days = sorted(stats[mac].keys())
+            print 'MAC: %s, VENDOR: %s' % (mac, vendor)
+            for d in days:
+                rssi = stats[mac][d]['rssi']
+                first = time.strftime('%H:%M:%S', time.localtime(stats[mac][d]['first']))
+                last = time.strftime('%H:%M:%S', time.localtime(stats[mac][d]['last']))
+                print '  %s: [%s-%s]' % (d, first, last),
+                print '  RSSI: #: %4d, min: %d, max: %d, avg: %d, median: %d' % (
+                    len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
         return
 
     if args.list_mac_ssids:
