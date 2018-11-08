@@ -9,6 +9,8 @@ Another tool presents statistics about the mac addresses present in the database
 
 ## Usage
 ### probemon.py
+You must enable monitor mode on your interface before running `probemon.py`. You can use, for example, `airmon-ng start wlan0` where wlan0 is your interface name. Now, use *wlan0mon* with `probemon.py`.
+
 ```
 usage: probemon.py [-h] [-c CHANNEL] [-d DB] -i INTERFACE [-I IGNORE] [-n]
                    [-s]
