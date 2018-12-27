@@ -121,7 +121,7 @@ def main():
 
     if args.day and (args.before or args.after):
         print 'Error: --day conflicts with --after or --before'
-        return
+        sys.exit(-1)
 
     if args.day_by_day and not args.mac:
         print 'Error: --day-by-day needs a --mac switch'
@@ -144,25 +144,35 @@ def main():
 
     conn = sqlite3.connect(args.db)
     c = conn.cursor()
+
+    if args.ssid:
+        c.execute('select id from ssid where name=?', (args.ssid,))
+        ssid = c.fetchone()
+        if ssid is None:
+            print 'Error: ssid not found'
+            conn.close()
+            sys.exit(-1)
+        c.execute('select distinct mac from probemon where ssid=?', (ssid[0],))
+
+        macs = []
+        # search for mac that have probed that ssid
+        for row in c.fetchall():
+            c.execute('select address from mac where id=?', (row[0],))
+            mac = c.fetchone()[0]
+            if args.privacy and is_local_bit_set(mac):
+                continue
+            macs.append(mac)
+
+        print '%s: %s' % (args.ssid, ', '.join(macs))
+        conn.close()
+        return
+
     sql, sql_args = build_sql_query(after, before, args.mac, args.rssi, args.zero, args.day)
     try:
         c.execute(sql, sql_args)
     except sqlite3.OperationalError as e:
         time.sleep(2)
         c.execute(sql, sql_args)
-
-    if args.ssid:
-        # search for mac that have probed that ssid
-        macs = set()
-        if args.privacy:
-            print ':: Ignoring LAA address'
-        for row in c.fetchall():
-            if row[3] == args.ssid:
-                if args.privacy and is_local_bit_set(row[1]):
-                    continue
-                macs.add(row[1])
-        print '%s: %s' % (args.ssid, ', '.join(macs))
-        return
 
     if args.log:
         # simply output each log entry to stdout
