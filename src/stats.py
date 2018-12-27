@@ -23,7 +23,11 @@ from config import *
 
 def is_local_bit_set(mac):
     byte = mac.split(':')
-    return int(byte[0], 16) & 0b00000010 == 0b00000010
+    try:
+        bi = int(byte[0], 16)
+        return  bi & 0b00000010 == 0b00000010
+    except ValueError as e:
+        return False
 
 def median(lst):
     n = len(lst)
