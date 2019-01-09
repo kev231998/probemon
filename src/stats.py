@@ -148,6 +148,13 @@ def main():
 
     conn = sqlite3.connect(args.db)
     c = conn.cursor()
+    sql = 'pragma query_only = on;'
+    c.execute(sql)
+    sql = 'pragma temp_store = 2;' # to store temp table and indices in memory
+    c.execute(sql)
+    sql = 'pragma journal_mode = off;' # disable journal for rollback (we don't use this)
+    c.execute(sql)
+    conn.commit()
 
     if args.ssid:
         c.execute('select id from ssid where name=?', (args.ssid,))

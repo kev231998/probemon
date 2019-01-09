@@ -140,14 +140,14 @@ def build_packet_cb(conn, c, stdout, ignored):
 
 def init_db(conn, c):
     # create tables if they do not exist
-    sql = 'create table if not exists vendor(id integer not null primary key, name text)'
+    sql = 'create table if not exists vendor(id integer not null primary key, name text);'
     c.execute(sql)
     sql = '''create table if not exists mac(id integer not null primary key, address text,
         vendor integer,
         foreign key(vendor) references vendor(id)
-        )'''
+        );'''
     c.execute(sql)
-    sql = 'create table if not exists ssid(id integer not null primary key, name text)'
+    sql = 'create table if not exists ssid(id integer not null primary key, name text);'
     c.execute(sql)
     sql = '''create table if not exists probemon(date float,
         mac integer,
@@ -155,7 +155,14 @@ def init_db(conn, c):
         rssi integer,
         foreign key(mac) references mac(id),
         foreign key(ssid) references ssid(id)
-        )'''
+        );'''
+    c.execute(sql)
+    conn.commit()
+    sql = 'pragma synchronous = normal;'
+    c.execute(sql)
+    sql = 'pragma temp_store = 2;' # to store temp table and indices in memory
+    c.execute(sql)
+    sql = 'pragma journal_mode = off;' # disable journal for rollback (we don't use this)
     c.execute(sql)
     conn.commit()
 
