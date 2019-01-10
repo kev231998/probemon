@@ -42,10 +42,7 @@ class Colors:
 def commit_queue(conn, c):
     global queue
     for fields in queue:
-        date, mac, vendor, ssid, rssi = fields
-        vendor_id = vendor_cache[vendor]
-        mac_id = mac_cache[mac]
-        ssid_id = ssid_cache[ssid]
+        date, mac_id, vendor_id, ssid_id, rssi = fields
         c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
     try:
         conn.commit()
@@ -66,6 +63,7 @@ def insert_into_db(fields, conn, c):
         start_ts = time.time()
 
     if mac in mac_cache and ssid in ssid_cache and vendor in vendor_cache:
+        fields = date, mac_cache[mac], vendor_cache[vendor], ssid_cache[ssid], rssi
         queue.append(fields)
     else:
         try:
