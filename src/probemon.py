@@ -16,13 +16,17 @@ from config import *
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
-VERSION = '0.3'
+VERSION = '0.4'
 MAX_VENDOR_LENGTH = 25
 MAX_SSID_LENGTH = 15
+MAX_QUEUE_LENGTH = 50
+MAX_ELAPSED_TIME = 60 # seconds
 
 mac_cache = LRU(128)
 ssid_cache = LRU(128)
 vendor_cache = LRU(128)
+queue = []
+start_ts = time.time()
 
 class Colors:
     red = '\033[31m'
@@ -35,53 +39,79 @@ class Colors:
     bold = '\033[1m'
     underline = '\033[4m'
 
-def insert_into_db(fields, conn, c):
-    date, mac, vendor, ssid, rssi = fields
-
-    try:
+def commit_queue(conn, c):
+    global queue
+    for fields in queue:
+        date, mac, vendor, ssid, rssi = fields
         vendor_id = vendor_cache[vendor]
-    except KeyError as k:
-        c.execute('select id from vendor where name=?', (vendor,))
-        row = c.fetchone()
-        if row is None:
-            c.execute('insert into vendor (name) values(?)', (vendor,))
-            c.execute('select id from vendor where name=?', (vendor,))
-            row = c.fetchone()
-        vendor_id = row[0]
-        vendor_cache[vendor] = vendor_id
-
-    try:
         mac_id = mac_cache[mac]
-    except KeyError as k:
-        c.execute('select id from mac where address=?', (mac,))
-        row = c.fetchone()
-        if row is None:
-            c.execute('insert into mac (address,vendor) values(?, ?)', (mac, vendor_id))
-            c.execute('select id from mac where address=?', (mac,))
-            row = c.fetchone()
-        mac_id = row[0]
-        mac_cache[mac] = mac_id
-
-    try:
         ssid_id = ssid_cache[ssid]
-    except KeyError as k:
-        c.execute('select id from ssid where name=?', (ssid,))
-        row = c.fetchone()
-        if row is None:
-            c.execute('insert into ssid (name) values(?)', (ssid,))
-            c.execute('select id from ssid where name=?', (ssid,))
-            row = c.fetchone()
-        ssid_id = row[0]
-        ssid_cache[ssid] = ssid_id
-
-    c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
-
+        c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
     try:
         conn.commit()
+        queue = []
     except sqlite3.OperationalError as e:
         # db is locked ? Retry again
         time.sleep(10)
         conn.commit()
+        queue = []
+
+def insert_into_db(fields, conn, c):
+    global start_ts, vendor_cache, ssid_cache, mac_cache, queue
+
+    date, mac, vendor, ssid, rssi = fields
+
+    if len(queue) > MAX_QUEUE_LENGTH or time.time()-start_ts > MAX_ELAPSED_TIME:
+        commit_queue(conn, c)
+        start_ts = time.time()
+
+    if mac in mac_cache and ssid in ssid_cache and vendor in vendor_cache:
+        queue.append(fields)
+    else:
+        try:
+            vendor_id = vendor_cache[vendor]
+        except KeyError as k:
+            c.execute('select id from vendor where name=?', (vendor,))
+            row = c.fetchone()
+            if row is None:
+                c.execute('insert into vendor (name) values(?)', (vendor,))
+                c.execute('select id from vendor where name=?', (vendor,))
+                row = c.fetchone()
+            vendor_id = row[0]
+            vendor_cache[vendor] = vendor_id
+
+        try:
+            mac_id = mac_cache[mac]
+        except KeyError as k:
+            c.execute('select id from mac where address=?', (mac,))
+            row = c.fetchone()
+            if row is None:
+                c.execute('insert into mac (address,vendor) values(?, ?)', (mac, vendor_id))
+                c.execute('select id from mac where address=?', (mac,))
+                row = c.fetchone()
+            mac_id = row[0]
+            mac_cache[mac] = mac_id
+
+        try:
+            ssid_id = ssid_cache[ssid]
+        except KeyError as k:
+            c.execute('select id from ssid where name=?', (ssid,))
+            row = c.fetchone()
+            if row is None:
+                c.execute('insert into ssid (name) values(?)', (ssid,))
+                c.execute('select id from ssid where name=?', (ssid,))
+                row = c.fetchone()
+            ssid_id = row[0]
+            ssid_cache[ssid] = ssid_id
+
+        c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
+
+        try:
+            conn.commit()
+        except sqlite3.OperationalError as e:
+            # db is locked ? Retry again
+            time.sleep(10)
+            conn.commit()
 
 def build_packet_cb(conn, c, stdout, ignored):
     def packet_callback(packet):
@@ -167,7 +197,12 @@ def init_db(conn, c):
     conn.commit()
 
 def close_db(conn):
-    conn.close()
+    try:
+        c = conn.cursor()
+        commit_queue(conn, c)
+        conn.close()
+    except sqlite3.ProgrammingError as e:
+        pass
 
 def main():
     # sniff on specified channel
@@ -210,6 +245,7 @@ if __name__ == '__main__':
         pass
     finally:
         if conn is not None:
+            commit_queue(conn, c)
             conn.close()
 
 # vim: set et ts=4 sw=4:
