@@ -221,11 +221,21 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser(description=DESCRIPTION)
         parser.add_argument('-c', '--channel', default=1, type=int, help="the channel to listen on")
         parser.add_argument('-d', '--db', default='probemon.db', help="database file name to use")
-        parser.add_argument('-i', '--interface', required=True, help="the capture interface to use")
+        parser.add_argument('-i', '--interface', help="the capture interface to use")
         parser.add_argument('-I', '--ignore', action='append', help="mac address to ignore")
         parser.add_argument('-s', '--stdout', action='store_true', default=False, help="also log probe request to stdout")
+        parser.add_argument('-v', '--version', action='store_true', default=False, help="show version and exit")
         args = parser.parse_args()
 
+        if args.version:
+            print '%s %s' % (NAME, VERSION)
+            print '%s' % DESCRIPTION
+            sys.exit(1)
+
+        if not args.interface:
+            print 'Error: argument -i/--interface is required'
+            sys.exit(-1)
+        
         if args.ignore is not None:
             IGNORED = args.ignore
 
