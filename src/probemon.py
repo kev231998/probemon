@@ -213,7 +213,7 @@ def main():
 
     print ":: Started listening to probe requests on channel %d on interface %s" % (args.channel, args.interface)
     sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, IGNORED),
-        store=0, lfilter=lambda x:x.haslayer(Dot11ProbeReq))
+        store=0, filter='wlan type mgt subtype probe-req')
 
 if __name__ == '__main__':
     conn = None
@@ -241,7 +241,7 @@ if __name__ == '__main__':
 
         # only import scapy here to avoid delay if error in argument parsing
         print 'Loading scapy...'
-        from scapy.all import sniff, Dot11ProbeReq
+        from scapy.all import sniff
 
         conn = sqlite3.connect(args.db)
         c = conn.cursor()
