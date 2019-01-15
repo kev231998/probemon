@@ -10,6 +10,7 @@ import netaddr
 import base64
 from lru import LRU
 import atexit
+import struct
 
 # read config variable from config.py file
 from config import *
@@ -38,6 +39,38 @@ class Colors:
     endc = '\033[0m'
     bold = '\033[1m'
     underline = '\033[4m'
+
+def parse_rssi(packet):
+    # parse dbm_antsignal from radiotap header
+    # borrowed from python-radiotap module
+    radiotap_header_fmt = '<BBHI'
+    radiotap_header_len = struct.calcsize(radiotap_header_fmt)
+    version, pad, radiotap_len, present = struct.unpack_from(radiotap_header_fmt, packet)
+
+    start = radiotap_header_len
+    bits = [int(b) for b in bin(present)[2:].rjust(32, '0')]
+    bits.reverse()
+    if bits[5] == 0:
+        return 0
+
+    while present & (1 << 31):
+        present, = struct.unpack_from('<I', packet, start)
+        start += 4
+    offset = start
+    if bits[0] == 1:
+        offset = (offset + 8 -1) & ~(8-1)
+        offset += 8
+    if bits[1] == 1:
+        offset += 1
+    if bits[2] == 1:
+        offset += 1
+    if bits[3] == 1:
+        offset = (offset + 2 -1) & ~(2-1)
+        offset += 4
+    if bits[4] == 1:
+        offset += 2
+    dbm_antsignal, = struct.unpack_from('<b', packet, offset)
+    return dbm_antsignal
 
 def commit_queue(conn, c):
     global queue
@@ -124,15 +157,7 @@ def build_packet_cb(conn, c, stdout, ignored):
             vendor = u'UNKNOWN'
 
         # parse headers to get RSSI value
-        try:
-            rssi = -(256-ord(packet.notdecoded[-2:-1]))
-            if rssi == -256:
-                rssi = -(256-ord(packet.notdecoded[-4:-3]))
-        except TypeError as e:
-            try:
-                rssi = -(256-ord(packet.notdecoded[-4:-3]))
-            except TypeError as f:
-                rssi = 0
+        rssi = parse_rssi(buffer(str(packet)))
 
         try:
             ssid = packet.info.decode('utf-8')
