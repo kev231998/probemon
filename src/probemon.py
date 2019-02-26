@@ -156,8 +156,11 @@ def build_packet_cb(conn, c, stdout, ignored):
         except IndexError as e:
             vendor = u'UNKNOWN'
 
-        # parse headers to get RSSI value
-        rssi = parse_rssi(buffer(str(packet)))
+        try:
+            rssi = packet.dBm_AntSignal
+        except AttributeError as a:
+            # parse headers to get RSSI value, scapy version below 2.4.2
+            rssi = parse_rssi(buffer(str(packet)))
 
         try:
             ssid = packet.info.decode('utf-8')
@@ -260,7 +263,7 @@ if __name__ == '__main__':
         if not args.interface:
             print 'Error: argument -i/--interface is required'
             sys.exit(-1)
-        
+
         if args.ignore is not None:
             IGNORED = args.ignore
 
