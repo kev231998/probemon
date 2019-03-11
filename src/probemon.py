@@ -91,9 +91,10 @@ def insert_into_db(fields, conn, c):
 
     date, mac, vendor, ssid, rssi = fields
 
-    if len(queue) > MAX_QUEUE_LENGTH or time.time()-start_ts > MAX_ELAPSED_TIME:
+    now = time.time()
+    if len(queue) > MAX_QUEUE_LENGTH or now-start_ts > MAX_ELAPSED_TIME:
         commit_queue(conn, c)
-        start_ts = time.time()
+        start_ts = now
 
     if mac in mac_cache and ssid in ssid_cache and vendor in vendor_cache:
         fields = date, mac_cache[mac], vendor_cache[vendor], ssid_cache[ssid], rssi
