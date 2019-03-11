@@ -23,12 +23,6 @@ MAX_SSID_LENGTH = 15
 MAX_QUEUE_LENGTH = 50
 MAX_ELAPSED_TIME = 60 # seconds
 
-mac_cache = LRU(128)
-ssid_cache = LRU(128)
-vendor_cache = LRU(128)
-queue = []
-start_ts = time.time()
-
 class Colors:
     red = '\033[31m'
     green = '\033[32m'
@@ -39,6 +33,26 @@ class Colors:
     endc = '\033[0m'
     bold = '\033[1m'
     underline = '\033[4m'
+
+class MyCache:
+    def __init__(self, size):
+        self.mac = LRU(size)
+        self.ssid = LRU(size)
+        self.vendor = LRU(size)
+
+class MyQueue:
+    def __init__(self, max_length, max_time):
+        self.values = []
+        self.ts = time.time()
+        self.max_length = max_length
+        self.max_time = max_time
+
+    def is_full(self):
+        return len(self.values) > self.max_length or time.time()-self.ts > self.max_time
+
+# globals
+cache = MyCache(128)
+queue = MyQueue(MAX_QUEUE_LENGTH, MAX_ELAPSED_TIME)
 
 def parse_rssi(packet):
     # parse dbm_antsignal from radiotap header
@@ -73,37 +87,37 @@ def parse_rssi(packet):
     return dbm_antsignal
 
 def commit_queue(conn, c):
-    global queue, start_ts
+    global queue
     now = time.time()
 
-    for fields in queue:
+    for fields in queue.values:
         date, mac_id, vendor_id, ssid_id, rssi = fields
         c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
     try:
         conn.commit()
-        queue = []
-        start_ts = now
+        queue.values = []
+        queue.ts = now
     except sqlite3.OperationalError as e:
         # db is locked ? Retry again
         time.sleep(10)
         conn.commit()
-        queue = []
-        start_ts = now
+        queue.values = []
+        queue.ts = now
 
 def insert_into_db(fields, conn, c):
-    global vendor_cache, ssid_cache, mac_cache, queue
+    global cache, queue
 
     date, mac, vendor, ssid, rssi = fields
 
-    if len(queue) > MAX_QUEUE_LENGTH or time.time()-start_ts > MAX_ELAPSED_TIME:
+    if queue.is_full():
         commit_queue(conn, c)
 
-    if mac in mac_cache and ssid in ssid_cache and vendor in vendor_cache:
-        fields = date, mac_cache[mac], vendor_cache[vendor], ssid_cache[ssid], rssi
-        queue.append(fields)
+    if mac in cache.mac and ssid in cache.ssid and vendor in cache.vendor:
+        fields = date, cache.mac[mac], cache.vendor[vendor], cache.ssid[ssid], rssi
+        queue.values.append(fields)
     else:
         try:
-            vendor_id = vendor_cache[vendor]
+            vendor_id = cache.vendor[vendor]
         except KeyError as k:
             c.execute('select id from vendor where name=?', (vendor,))
             row = c.fetchone()
@@ -112,10 +126,10 @@ def insert_into_db(fields, conn, c):
                 c.execute('select id from vendor where name=?', (vendor,))
                 row = c.fetchone()
             vendor_id = row[0]
-            vendor_cache[vendor] = vendor_id
+            cache.vendor[vendor] = vendor_id
 
         try:
-            mac_id = mac_cache[mac]
+            mac_id = cache.mac[mac]
         except KeyError as k:
             c.execute('select id from mac where address=?', (mac,))
             row = c.fetchone()
@@ -124,10 +138,10 @@ def insert_into_db(fields, conn, c):
                 c.execute('select id from mac where address=?', (mac,))
                 row = c.fetchone()
             mac_id = row[0]
-            mac_cache[mac] = mac_id
+            cache.mac[mac] = mac_id
 
         try:
-            ssid_id = ssid_cache[ssid]
+            ssid_id = cache.ssid[ssid]
         except KeyError as k:
             c.execute('select id from ssid where name=?', (ssid,))
             row = c.fetchone()
@@ -136,7 +150,7 @@ def insert_into_db(fields, conn, c):
                 c.execute('select id from ssid where name=?', (ssid,))
                 row = c.fetchone()
             ssid_id = row[0]
-            ssid_cache[ssid] = ssid_id
+            cache.ssid[ssid] = ssid_id
 
         c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
 
