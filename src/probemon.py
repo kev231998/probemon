@@ -73,28 +73,30 @@ def parse_rssi(packet):
     return dbm_antsignal
 
 def commit_queue(conn, c):
-    global queue
+    global queue, start_ts
+    now = time.time()
+
     for fields in queue:
         date, mac_id, vendor_id, ssid_id, rssi = fields
         c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
     try:
         conn.commit()
         queue = []
+        start_ts = now
     except sqlite3.OperationalError as e:
         # db is locked ? Retry again
         time.sleep(10)
         conn.commit()
         queue = []
+        start_ts = now
 
 def insert_into_db(fields, conn, c):
-    global start_ts, vendor_cache, ssid_cache, mac_cache, queue
+    global vendor_cache, ssid_cache, mac_cache, queue
 
     date, mac, vendor, ssid, rssi = fields
 
-    now = time.time()
-    if len(queue) > MAX_QUEUE_LENGTH or now-start_ts > MAX_ELAPSED_TIME:
+    if len(queue) > MAX_QUEUE_LENGTH or time.time()-start_ts > MAX_ELAPSED_TIME:
         commit_queue(conn, c)
-        start_ts = now
 
     if mac in mac_cache and ssid in ssid_cache and vendor in vendor_cache:
         fields = date, mac_cache[mac], vendor_cache[vendor], ssid_cache[ssid], rssi
