@@ -50,6 +50,10 @@ class MyQueue:
     def is_full(self):
         return len(self.values) > self.max_length or time.time()-self.ts > self.max_time
 
+    def clear(self):
+        self.values = []
+        self.ts = time.time()
+
 # globals
 cache = MyCache(128)
 queue = MyQueue(MAX_QUEUE_LENGTH, MAX_ELAPSED_TIME)
@@ -88,21 +92,18 @@ def parse_rssi(packet):
 
 def commit_queue(conn, c):
     global queue
-    now = time.time()
 
     for fields in queue.values:
         date, mac_id, vendor_id, ssid_id, rssi = fields
         c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
     try:
         conn.commit()
-        queue.values = []
-        queue.ts = now
+        queue.clear()
     except sqlite3.OperationalError as e:
         # db is locked ? Retry again
         time.sleep(10)
         conn.commit()
-        queue.values = []
-        queue.ts = now
+        queue.clear()
 
 def insert_into_db(fields, conn, c):
     global cache, queue
