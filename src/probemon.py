@@ -90,20 +90,21 @@ def parse_rssi(packet):
     dbm_antsignal, = struct.unpack_from('<b', packet, offset)
     return dbm_antsignal
 
-def commit_queue(conn, c):
+def commit_queue(conn, c, tries=0):
     global queue
 
-    for fields in queue.values:
-        date, mac_id, vendor_id, ssid_id, rssi = fields
-        c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
+    time.sleep(tries*2)
+    if tries == 0:
+        for fields in queue.values:
+            date, mac_id, vendor_id, ssid_id, rssi = fields
+            c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
+        queue.clear()
     try:
         conn.commit()
-        queue.clear()
     except sqlite3.OperationalError as e:
-        # db is locked ? Retry again
-        time.sleep(10)
-        conn.commit()
-        queue.clear()
+        # db is locked ?
+        if tries < 5:
+            commit_queue(conn, c, tries=tries+1)
 
 def insert_into_db(fields, conn, c):
     global cache, queue
