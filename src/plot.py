@@ -12,6 +12,7 @@ import argparse
 import sqlite3
 import sys
 import os.path
+import os
 import re
 
 NUMOFSECSINADAY = 60*60*24
@@ -286,7 +287,8 @@ ax.set_xlim(start_time-space, end_time+space)
 ax.set_ylim(-1, len(macs))
 # add a timestamp to the image
 if args.timestamp:
-    fig.text(0.49, 0.97, time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time())), fontsize=8, alpha=0.2)
+    ts = time.localtime(os.stat(args.db).st_mtime)
+    fig.text(0.49, 0.97, time.strftime('%Y-%m-%dT%H:%M:%S', ts), fontsize=8, alpha=0.2)
 
 # and tada !
 if args.image:
