@@ -49,7 +49,7 @@ parser.add_argument('-p', '--privacy', action='store_true', default=False, help=
 parser.add_argument('-r', '--rssi', type=int, default=-99, help='minimal value for RSSI')
 parser.add_argument('-s', '--start', help='start timestamp')
 parser.add_argument('--span-time', default='1d', help='span of time (coud be #d or ##h or ###m)')
-parser.add_argument('-t', '--timestamp', action='store_true', help='add a timestamp to the top right of image')
+parser.add_argument('-t', '--title', nargs='?', const='', default=None, help='add a title to the top of image (if none specified, use a timestamp)')
 args = parser.parse_args()
 
 # parse span_time
@@ -285,10 +285,14 @@ if args.legend:
 space = 5*60 # 5 minutes
 ax.set_xlim(start_time-space, end_time+space)
 ax.set_ylim(-1, len(macs))
-# add a timestamp to the image
-if args.timestamp:
-    ts = time.localtime(os.stat(args.db).st_mtime)
-    fig.text(0.49, 0.97, time.strftime('%Y-%m-%dT%H:%M:%S', ts), fontsize=8, alpha=0.2)
+# add a title to the image
+if args.title is not None:
+    if args.title == '':
+        ts = time.localtime(os.stat(args.db).st_mtime)
+        title = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+    else:
+        title = args.title
+    fig.text(0.49, 0.97, title, fontsize=8, alpha=0.2)
 
 # and tada !
 if args.image:
