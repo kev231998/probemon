@@ -12,10 +12,10 @@ Another tool presents statistics about the mac addresses present in the database
 You must enable monitor mode on your interface before running `probemon.py`. You can use, for example, `airmon-ng start wlan0` where wlan0 is your interface name. Now, use *wlan0mon* with `probemon.py`.
 
 ```
-usage: probemon.py [-h] [-c CHANNEL] [-d DB] -i INTERFACE [-I IGNORE] [-n]
-                   [-s]
+usage: probemon.py [-h] [-c CHANNEL] [-d DB] [-i INTERFACE] [-I IGNORE] [-s]
+                   [-v]
 
-a command line tool for logging 802.11 probe request frames
+probemon is a script to log probe request
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -27,6 +27,7 @@ optional arguments:
   -I IGNORE, --ignore IGNORE
                         mac address to ignore
   -s, --stdout          also log probe request to stdout
+  -v, --version         show version and exit
 ```
 
 ### plot script
@@ -34,18 +35,20 @@ This script simplifies the analysis of the recorded data by drawing a chart that
 mac addresses via the recorded probe request.
 
 ```
-usage: plot.py [-h] [-b DB] [-d DAYS] [-i [IMAGE]] [-l] [-k KNOWNMAC] [-m MIN]
-               [-M MAC] [-p] [-r RSSI] [-s START] [-t]
+usage: plot.py [-h] [-b DB] [-c] [-i [IMAGE]] [-l] [--label] [-k KNOWNMAC]
+               [-M MIN] [-m MAC] [-p] [-r RSSI] [-s START]
+               [--span-time SPAN_TIME] [-t [TITLE]] [-v]
 
 Plot MAC presence from probe requests in the database
 
 optional arguments:
   -h, --help            show this help message and exit
   -b DB, --db DB        file name of the db
-  -d DAYS, --days DAYS  number of days to keep
+  -c, --continuous      continously update the plot/image (every minute)
   -i [IMAGE], --image [IMAGE]
                         output an image
   -l, --legend          add a legend
+  --label               add a mac label for each plot
   -k KNOWNMAC, --knownmac KNOWNMAC
                         known mac to highlight in red
   -M MIN, --min MIN     minimum number of probe requests to consider
@@ -54,7 +57,12 @@ optional arguments:
   -r RSSI, --rssi RSSI  minimal value for RSSI
   -s START, --start START
                         start timestamp
-  -t, --timestamp       add a timestamp to the top right of image
+  --span-time SPAN_TIME
+                        span of time (coud be #d or ##h or ###m)
+  -t [TITLE], --title [TITLE]
+                        add a title to the top of image (if none specified,
+                        use a timestamp)
+  -v, --verbose         be verbose
 ```
 
 * -d/--days specify the number of days that will lapse the chart from 00:00 to 00:00.
@@ -67,6 +75,10 @@ optional arguments:
 ![Image of chart plotted with plot.py](example.png)
 When displayed by the script, one can hover the mouse on the plot to get the mac address, and the timestamp.
 When you export to an image, you lose that feature but you can add a legend instead.
+
+#### Continuous mode
+You can specify the -c/--continuous switch to enable an automatic continuous generation of plot. (Currently only working with image)
+In one shell, run `./plot.py -i test.png`. Then open test.png in an image viewer, that auto-refresh the image automatically. The image will be updated/regenrated every minute.
 
 ### stats script
 It allows you to request the database about a specific mac address and get statistics about it,

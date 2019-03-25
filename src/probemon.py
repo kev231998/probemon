@@ -16,6 +16,7 @@ import struct
 import config
 MAX_QUEUE_LENGTH = 50
 MAX_ELAPSED_TIME = 60 # seconds
+DESCRIPTION = 'probemon is a script to log probe request'
 
 class Colors:
     red = '\033[31m'

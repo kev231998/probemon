@@ -40,15 +40,15 @@ def median(lst):
 
 def parse_ts(ts):
     try:
-        t = time.mktime(time.strptime(ts, '%Y-%m-%dT%H:%M'))
+        date = time.strptime(ts, '%Y-%m-%dT%H:%M')
     except  ValueError:
         try:
             date = time.strptime(ts, '%Y-%m-%d')
             date = time.strptime('%sT12:00' % ts, '%Y-%m-%dT%H:%M')
-            t = time.mktime(date)
         except ValueError:
             print "Error: can't parse date timestamp"
             sys.exit(-1)
+    t = time.mktime(date)
     return t
 
 def build_sql_query(after, before, macs, rssi, zero, day):
