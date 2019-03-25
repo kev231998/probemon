@@ -19,7 +19,7 @@ MAX_VENDOR_LENGTH = 25
 MAX_SSID_LENGTH = 15
 
 # read config variable from config.py file
-from config import *
+import config
 
 def is_local_bit_set(mac):
     byte = mac.split(':')
@@ -94,11 +94,10 @@ def build_sql_query(after, before, macs, rssi, zero, day):
     if zero:
         sql_where_clause = add_arg(sql_where_clause, 'and', 'rssi != 0')
 
-    global IGNORED
-    if len(IGNORED) > 0:
-        arg_list = ','.join(['?']*len(IGNORED))
+    if len(config.IGNORED) > 0:
+        arg_list = ','.join(['?']*len(config.IGNORED))
         sql_where_clause = add_arg(sql_where_clause, 'and', 'mac.address not in (%s)' % (arg_list,))
-        sql_args.extend(IGNORED)
+        sql_args.extend(config.IGNORED)
 
     sql = '%s where %s %s' % (sql_head, sql_where_clause, sql_tail)
     return sql, sql_args

@@ -13,13 +13,7 @@ import atexit
 import struct
 
 # read config variable from config.py file
-from config import *
-
-NAME = 'probemon'
-DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
-VERSION = '0.4'
-MAX_VENDOR_LENGTH = 25
-MAX_SSID_LENGTH = 15
+import config
 MAX_QUEUE_LENGTH = 50
 MAX_ELAPSED_TIME = 60 # seconds
 
@@ -193,7 +187,7 @@ def build_packet_cb(conn, c, stdout, ignored):
             insert_into_db(fields, conn, c)
 
             if stdout:
-                if fields[1] in KNOWNMAC:
+                if fields[1] in config.KNOWNMAC:
                     fields[1] = u'%s%s%s%s' % (Colors.bold, Colors.red, fields[1], Colors.endc)
                 # convert time to iso
                 fields[0] = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(now))
@@ -259,7 +253,7 @@ def main():
         sys.exit(-1)
 
     print ":: Started listening to probe requests on channel %d on interface %s" % (args.channel, args.interface)
-    sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, IGNORED),
+    sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, config.IGNORED),
         store=0, filter='wlan type mgt subtype probe-req')
 
 if __name__ == '__main__':
@@ -284,7 +278,7 @@ if __name__ == '__main__':
             sys.exit(-1)
 
         if args.ignore is not None:
-            IGNORED = args.ignore
+            config.IGNORED = args.ignore
 
         # only import scapy here to avoid delay if error in argument parsing
         print 'Loading scapy...'

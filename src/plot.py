@@ -21,8 +21,8 @@ COLORS = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple',
     'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']
 
 # read config variable from config.py file
-from config import *
-MERGED = (m[:8] for m in MERGED)
+import config
+config.MERGED = (m[:8] for m in config.MERGED)
 
 # draws a rectangle as custom legend handler
 class MyLine2DHandler(object):
@@ -70,7 +70,7 @@ else:
     sys.exit(-1)
 
 if args.knownmac is not None:
-    KNOWNMAC = args.knownmac
+    config.KNOWNMAC = args.knownmac
 
 if not os.path.exists(args.db):
     print 'Error: file not found %s' % args.db
@@ -109,7 +109,7 @@ else:
 # keep only the data between 2 timestamps ignoring IGNORED macs with rssi
 # greater than the min value
 ts = {}
-arg_list = ','.join(['?']*len(IGNORED))
+arg_list = ','.join(['?']*len(config.IGNORED))
 sql = '''select date,mac.address,rssi from probemon
     inner join mac on mac.id=probemon.mac
     where date <= ? and date >= ?
@@ -117,10 +117,10 @@ sql = '''select date,mac.address,rssi from probemon
     and rssi > ?
     order by date''' % (arg_list,)
 try:
-    c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,))
+    c.execute(sql, (end_time, start_time) + config.IGNORED + (args.rssi,))
 except sqlite3.OperationalError as e:
     time.sleep(2)
-    c.execute(sql, (end_time, start_time) + IGNORED + (args.rssi,))
+    c.execute(sql, (end_time, start_time) + config.IGNORED + (args.rssi,))
 for row in c.fetchall():
     if row[1] in ts:
         ts[row[1]].append(row[0])
@@ -144,7 +144,7 @@ if args.mac :
 
 # filter our data set based on min probe request or mac appearence
 for k,v in ts.items():
-    if (len(v) <= args.min and k not in KNOWNMAC) or k not in macs:
+    if (len(v) <= args.min and k not in config.KNOWNMAC) or k not in macs:
         del ts[k]
 
 # sort the data on frequency of appearence
@@ -167,7 +167,7 @@ if args.privacy:
         times.append(sorted(t))
 
 # merge all same vendor mac into one plot for a virtual MAC called 'OUI'
-for mv in MERGED:
+for mv in config.MERGED:
     indx = [i for i,m in enumerate(macs) if m[:8] == mv]
     if len(indx) > 0:
         t = []
@@ -202,7 +202,7 @@ for i,p in enumerate(times):
     # constant value
     q = [n]*len(p)
     label = macs[i]
-    if macs[i] in KNOWNMAC:
+    if macs[i] in config.KNOWNMAC:
         line, = ax.plot(p, q, color='tab:red', label=label)
     elif macs[i] == 'LAA' or is_local_bit_set(macs[i]):
         if macs[i] != 'LAA':
@@ -296,8 +296,8 @@ if args.title is not None:
 
 # and tada !
 if args.image:
-    fig.set_size_inches(float(HEIGHT)/DPI, float(WIDTH)/DPI)
-    fig.savefig(args.image, dpi=DPI)
+    fig.set_size_inches(float(config.HEIGHT)/config.DPI, float(config.WIDTH)/config.DPI)
+    fig.savefig(args.image, dpi=config.DPI)
     #fig.savefig('test.svg', format='svg')
 else:
     plt.show()
