@@ -1,3 +1,5 @@
+*all your probe requests belong to us*
+
 # probemon
 probemon is a simple command line tool for logging data from 802.11 probe request frames with tools to plot mac presence and get statistics.
 
@@ -132,3 +134,14 @@ It should be noted that not all devices are equal. They vary a lot in behavior r
 Depending on the type of device (PC/laptop/..., printer, mobile phone/tablet, IoT device), the OS used (Linux, Windows, Android, MacOS/iOS, unknown embedded OS, ...) the wifi chipset and/or the wifi/network stack, one device behave differently from one another when sending probe request.
 
 Even phone using the same OS like android, can behave differently: some send PR every 30 seconds, while others only send PR when the screen is unlocked.
+
+# Trick #
+## Fake AP ##
+ - If you have a specific target that is using randomized MAC address while probing
+ - If you have been able to catch and determine a SSID that the target is probing for
+ - then you can decloak it by using a fake AP with the same name of the SSID previously sniffed.
+
+You don't need to provide internet accesss. But in that case, the target might notice it.
+Whereas if you let it use Internet, you can be liable of its use of Internet.
+
+The target having seen the AP in the vicinity will continue to probe for it, decloaked.
