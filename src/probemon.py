@@ -12,11 +12,17 @@ from lru import LRU
 import atexit
 import struct
 
-# read config variable from config.py file
-import config
+NAME = 'probemon'
+DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
+VERSION = '0.5'
+
 MAX_QUEUE_LENGTH = 50
 MAX_ELAPSED_TIME = 60 # seconds
-DESCRIPTION = 'probemon is a script to log probe request'
+MAX_VENDOR_LENGTH = 25
+MAX_SSID_LENGTH = 15
+
+# read config variable from config.py file
+import config
 
 class Colors:
     red = '\033[31m'
@@ -272,6 +278,7 @@ if __name__ == '__main__':
         if args.version:
             print '%s %s' % (NAME, VERSION)
             print '%s' % DESCRIPTION
+            print "© 2018-2019 solsTiCe d'Hiver, GPL 3 licensed"
             sys.exit(1)
 
         if not args.interface:
