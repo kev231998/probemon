@@ -184,6 +184,8 @@ def build_packet_cb(conn, c, stdout, ignored):
 
         try:
             ssid = packet.info.decode('utf-8')
+        except AttributeError as a:
+            ssid = u''
         except UnicodeDecodeError as u:
             # encode the SSID in base64 because it will fail
             # to be inserted into the db otherwise
