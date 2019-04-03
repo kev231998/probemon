@@ -13,7 +13,7 @@ import atexit
 import struct
 
 NAME = 'probemon'
-DESCRIPTION = "a command line tool for logging 802.11 probe request frames"
+DESCRIPTION = "a command line tool for logging 802.11 probe requests"
 VERSION = '0.5'
 
 MAX_QUEUE_LENGTH = 50

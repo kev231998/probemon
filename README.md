@@ -1,12 +1,10 @@
-*all your probe requests belong to us*
-
 # probemon
-probemon is a simple command line tool for logging data from 802.11 probe request frames with tools to plot mac presence and get statistics.
+probemon is a simple command line tool for logging data from 802.11 probe request frames with tools to plot mac presence over time and get statistics.
 
-This rewritten version of probemon uses an sqlite3 DB like in probeSniffer, as the log can quickly grow over time. It does not hop on channels as you lose more traffic by hopping than by simply staying on a major channel (like 1, 6, 11).
+This rewritten version of probemon uses an sqlite3 DB like in *probeSniffer*, as the log can quickly grow over time. It does not hop on channels as you lose more traffic by hopping than by simply staying on a major channel (like 1, 6, 11).
 
 This simple python script uses under the hood *scapy*.
-A tool called *plot.py* using *matplotlib* allows you to draw a chart to easily visualize the mac addresses presence over time.
+A script called *plot.py* using *matplotlib* allows you to draw a chart to easily visualize the mac addresses presence.
 Another tool presents statistics about the mac addresses present in the database; it is just a helper script to query the database.
 
 ## Usage
@@ -17,7 +15,7 @@ You must enable monitor mode on your interface before running `probemon.py`. You
 usage: probemon.py [-h] [-c CHANNEL] [-d DB] [-i INTERFACE] [-I IGNORE] [-s]
                    [-v]
 
-probemon is a script to log probe request
+a command line tool for logging 802.11 probe request
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -80,7 +78,7 @@ When you export to an image, you lose that feature but you can add a legend inst
 
 #### Continuous mode
 You can specify the -c/--continuous switch to enable an automatic continuous generation of plot. (Currently only working with image)
-In one shell, run `./plot.py -i test.png`. Then open test.png in an image viewer, that auto-refresh the image automatically. The image will be updated/regenrated every minute.
+In one shell, run `./plot.py -i test.png`. Then open test.png in an image viewer, that auto-refresh the image automatically. The image will be updated/regenerated every minute.
 
 ### stats script
 It allows you to request the database about a specific mac address and get statistics about it,
@@ -145,3 +143,5 @@ You don't need to provide internet accesss. But in that case, the target might n
 Whereas if you let it use Internet, you can be liable of its use of Internet.
 
 The target having seen the AP in the vicinity will continue to probe for it, decloaked.
+
+*all your probe requests belong to us*
