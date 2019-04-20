@@ -48,8 +48,25 @@ class MyQueue:
         self.max_length = max_length
         self.max_time = max_time
 
+    def append(self, fields):
+        self.values.append(fields)
+
     def is_full(self):
         return len(self.values) > self.max_length or time.time()-self.ts > self.max_time
+
+    def commit(self, conn, c, tries=0):
+        time.sleep(tries*3)
+        if tries == 0:
+            for fields in self.values:
+                date, mac_id, vendor_id, ssid_id, rssi = fields
+                c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
+            self.clear()
+        try:
+            conn.commit()
+        except sqlite3.OperationalError as e:
+            # db is locked ?
+            if tries < 5:
+                self.commit(conn, c, tries=tries+1)
 
     def clear(self):
         self.values = []
@@ -91,33 +108,17 @@ def parse_rssi(packet):
     dbm_antsignal, = struct.unpack_from('<b', packet, offset)
     return dbm_antsignal
 
-def commit_queue(conn, c, tries=0):
-    global queue
-
-    time.sleep(tries*2)
-    if tries == 0:
-        for fields in queue.values:
-            date, mac_id, vendor_id, ssid_id, rssi = fields
-            c.execute('insert into probemon values(?, ?, ?, ?)', (date, mac_id, ssid_id, rssi))
-        queue.clear()
-    try:
-        conn.commit()
-    except sqlite3.OperationalError as e:
-        # db is locked ?
-        if tries < 5:
-            commit_queue(conn, c, tries=tries+1)
-
 def insert_into_db(fields, conn, c):
-    global cache, queue
+    global cache
 
     date, mac, vendor, ssid, rssi = fields
 
     if queue.is_full():
-        commit_queue(conn, c)
+        queue.commit(conn, c)
 
     if mac in cache.mac and ssid in cache.ssid and vendor in cache.vendor:
         fields = date, cache.mac[mac], cache.vendor[vendor], cache.ssid[ssid], rssi
-        queue.values.append(fields)
+        queue.append(fields)
     else:
         try:
             vendor_id = cache.vendor[vendor]
@@ -247,7 +248,7 @@ def init_db(conn, c):
 def close_db(conn):
     try:
         c = conn.cursor()
-        commit_queue(conn, c)
+        queue.commit(conn, c)
         conn.close()
     except sqlite3.ProgrammingError as e:
         pass
@@ -304,7 +305,7 @@ if __name__ == '__main__':
         pass
     finally:
         if conn is not None:
-            commit_queue(conn, c)
+            queue.commit(conn, c)
             conn.close()
 
 # vim: set et ts=4 sw=4:
