@@ -69,7 +69,7 @@ class MyQueue:
                 self.commit(conn, c, tries=tries+1)
 
     def clear(self):
-        self.values = []
+        del self.values[:]
         self.ts = time.time()
 
 # globals
