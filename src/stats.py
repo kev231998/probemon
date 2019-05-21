@@ -233,7 +233,7 @@ def main():
                 first = time.strftime('%H:%M:%S', time.localtime(stats[mac][d]['first']))
                 last = time.strftime('%H:%M:%S', time.localtime(stats[mac][d]['last']))
                 print '  %s: [%s-%s]' % (d, first, last),
-                print '  RSSI: #: %4d, min: %d, max: %d, avg: %d, median: %d' % (
+                print '  RSSI: #: %4d, min: %3d, max: %3d, avg: %3d, median: %3d' % (
                     len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
         return
 
