@@ -36,7 +36,7 @@ mac addresses via the recorded probe request.
 
 ```
 usage: plot.py [-h] [-b DB] [-c] [-i [IMAGE]] [-l] [--label] [-k KNOWNMAC]
-               [-M MIN] [-m MAC] [-p] [-r RSSI] [-s START]
+               [-M MIN] [-m MAC] [-p] [--pcap PCAP] [-r RSSI] [-s START]
                [--span-time SPAN_TIME] [-t [TITLE]] [-v]
 
 Plot MAC presence from probe requests in the database
@@ -54,6 +54,7 @@ optional arguments:
   -M MIN, --min MIN     minimum number of probe requests to consider
   -m MAC, --mac MAC     only display that mac
   -p, --privacy         merge LAA MAC address
+  --pcap PCAP           pcap file to process instead of the db
   -r RSSI, --rssi RSSI  minimal value for RSSI
   -s START, --start START
                         start timestamp
@@ -71,6 +72,8 @@ optional arguments:
 * -m/--min allows specifying the minimum of probe requests that are needed to be displayed on the chart.
 * -r/--rssi allows filtering probe request based their RSSI value
 * -s/--start allows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
+
+* --pcap allows to get the same plot but using a pcap file instead of the gathered probe request in the db
 
 ![Image of chart plotted with plot.py](example.png)
 When displayed by the script, one can hover the mouse on the plot to get the mac address, and the timestamp.

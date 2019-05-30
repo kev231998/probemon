@@ -14,6 +14,7 @@ import sys
 import os.path
 import os
 import re
+from scapy.all import sniff
 
 IS_WINDOW_OPENED = False
 NUMOFSECSINADAY = 60*60*24
@@ -40,38 +41,51 @@ def is_local_bit_set(mac):
     return int(byte[0], 16) & 0b00000010 == 0b00000010
 
 def get_data(args):
-    # sqlite3
-    conn = sqlite3.connect(args.db)
-    c = conn.cursor()
-    sql = 'pragma query_only = on;'
-    c.execute(sql)
-    sql = 'pragma temp_store = 2;' # to store temp table and indices in memory
-    c.execute(sql)
-    sql = 'pragma journal_mode = off;' # disable journal for rollback (we don't use this)
-    c.execute(sql)
-    conn.commit()
-
-    # keep only the data between 2 timestamps ignoring IGNORED macs with rssi
-    # greater than the min value
     ts = {}
-    arg_list = ','.join(['?']*len(config.IGNORED))
-    sql = '''select date,mac.address,rssi from probemon
-        inner join mac on mac.id=probemon.mac
-        where date <= ? and date >= ?
-        and mac.address not in (%s)
-        and rssi > ?
-        order by date''' % (arg_list,)
-    try:
-        c.execute(sql, (args.end_time, args.start_time) + config.IGNORED + (args.rssi,))
-    except sqlite3.OperationalError as e:
-        time.sleep(2)
-        c.execute(sql, (args.end_time, args.start_time) + config.IGNORED + (args.rssi,))
-    for row in c.fetchall():
-        if row[1] in ts:
-            ts[row[1]].append(row[0])
-        else:
-            ts[row[1]] = [row[0]]
-    conn.close()
+    if args.pcap:
+        if args.verbose:
+            print ':: Processing pcap file %s' % args.pcap
+        packets = sniff(offline=args.pcap, verbose=0, filter='wlan type mgt subtype probe-req')
+        for packet in packets:
+            if packet.addr2 in config.IGNORED:
+                continue
+
+            if packet.addr2 in ts:
+                ts[packet.addr2].append(packet.time)
+            else:
+                ts[packet.addr2] = [packet.time]
+    else:
+        # sqlite3
+        conn = sqlite3.connect(args.db)
+        c = conn.cursor()
+        sql = 'pragma query_only = on;'
+        c.execute(sql)
+        sql = 'pragma temp_store = 2;' # to store temp table and indices in memory
+        c.execute(sql)
+        sql = 'pragma journal_mode = off;' # disable journal for rollback (we don't use this)
+        c.execute(sql)
+        conn.commit()
+
+        # keep only the data between 2 timestamps ignoring IGNORED macs with rssi
+        # greater than the min value
+        arg_list = ','.join(['?']*len(config.IGNORED))
+        sql = '''select date,mac.address,rssi from probemon
+            inner join mac on mac.id=probemon.mac
+            where date <= ? and date >= ?
+            and mac.address not in (%s)
+            and rssi > ?
+            order by date''' % (arg_list,)
+        try:
+            c.execute(sql, (args.end_time, args.start_time) + config.IGNORED + (args.rssi,))
+        except sqlite3.OperationalError as e:
+            time.sleep(2)
+            c.execute(sql, (args.end_time, args.start_time) + config.IGNORED + (args.rssi,))
+        for row in c.fetchall():
+            if row[1] in ts:
+                ts[row[1]].append(row[0])
+            else:
+                ts[row[1]] = [row[0]]
+        conn.close()
 
     def match(m, s):
         # match on start of mac address and use % as wild-card like in SQL syntax
@@ -265,6 +279,7 @@ def main():
     parser.add_argument('-M', '--min', type=int, default=3, help='minimum number of probe requests to consider')
     parser.add_argument('-m', '--mac', action='append', help='only display that mac')
     parser.add_argument('-p', '--privacy', action='store_true', default=False, help='merge LAA MAC address')
+    parser.add_argument('--pcap', help='pcap file to process instead of the db')
     parser.add_argument('-r', '--rssi', type=int, default=-99, help='minimal value for RSSI')
     parser.add_argument('-s', '--start', help='start timestamp')
     parser.add_argument('--span-time', default='1d', help='span of time (coud be #d or ##h or ###m)')
@@ -274,9 +289,13 @@ def main():
     args = parser.parse_args()
 
     # TODO: fix that
-    if args.continuous and not args.image:
-        print 'Error: --continuous does not currently work without using an image. Please use -i/--image'
-        sys.exit(-1)
+    if args.continuous:
+        if not args.image:
+            print 'Error: --continuous does not currently work without using an image. Please use -i/--image'
+            sys.exit(-1)
+        if args.pcap:
+            print 'Error: --continuous does not work with --pcap'
+            sys.exit(-1)
 
     # parse span_time
     args.span = args.span_time[-1:]
@@ -298,6 +317,9 @@ def main():
     if args.knownmac is None:
         args.knownmac = config.KNOWNMAC
 
+    if args.pcap and not os.path.exists(args.pcap):
+        print 'Error: pcap file not found %s' % args.pcap
+        sys.exit(-1)
     if not os.path.exists(args.db):
         print 'Error: file not found %s' % args.db
         sys.exit(-1)
