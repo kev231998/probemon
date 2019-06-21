@@ -6,3 +6,4 @@
 /src/probemon.db-journal
 /sync.sh
 *.pyc
+*.bak

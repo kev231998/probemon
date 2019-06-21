@@ -110,9 +110,6 @@ optional arguments:
   -z, --zero            filter rssi value of 0
 ```
 
-# Notes
-This is still using python2 😳 🤦 🕳️. This is easily converted to *python3* script with `2to3` though.
-
 The dependencies are:
 * for probemon.py: scapy, python-netaddr, lru-dict
 * for stats.py: None

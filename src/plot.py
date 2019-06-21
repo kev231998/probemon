@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 from datetime import datetime
 import time
@@ -19,8 +19,7 @@ from scapy.all import sniff
 IS_WINDOW_OPENED = False
 NUMOFSECSINADAY = 60*60*24
 # standard colors without red and gray
-COLORS = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple',
-    'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']
+COLORS = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan']
 REFRESH_TIME = 60 # in seconds
 
 # read config variable from config.py file
@@ -44,7 +43,7 @@ def get_data(args):
     ts = {}
     if args.pcap:
         if args.verbose:
-            print ':: Processing pcap file %s' % args.pcap
+            print(f':: Processing pcap file {args.pcap}')
         packets = sniff(offline=args.pcap, verbose=0, filter='wlan type mgt subtype probe-req')
         for packet in packets:
             if packet.addr2 in config.IGNORED:
@@ -96,18 +95,18 @@ def get_data(args):
         m = '^'+m
         return re.search(m, s) is not None
 
-    macs = ts.keys()
+    macs = list(ts.keys())
     if args.mac :
         # keep mac with args.mac as substring
-        macs = [m for m in ts.keys() if any(match(am.lower(), m) for am in args.mac)]
+        macs = [m for m in list(ts.keys()) if any(match(am.lower(), m) for am in args.mac)]
 
     # filter our data set based on min probe request or mac appearence
-    for k,v in ts.items():
+    for k,v in list(ts.items()):
         if (len(v) <= args.min and k not in args.knownmac) or k not in macs:
             del ts[k]
 
     # sort the data on frequency of appearence
-    data = sorted(ts.items(), key=lambda x:len(x[1]))
+    data = sorted(list(ts.items()), key=lambda x:len(x[1]))
     data.reverse()
     macs = [x for x,_ in data]
     times = [x for _,x in data]
@@ -213,7 +212,7 @@ def plot_data(macs, times, args):
     elif args.span == 'h':
         # show minor tick every x minutes
         ax.xaxis.set_minor_formatter(ticker.FuncFormatter(showhourminute))
-        h = args.span_time/3600
+        h = args.span_time//3600
         sm = 10*60
         if h > 2:
             sm = 15*60
@@ -241,7 +240,7 @@ def plot_data(macs, times, args):
     # add a legend
     if args.legend:
         # add a custom label handler to draw rectangle instead of default line style
-        ax.legend(lines, macs, loc='lower left', ncol=len(macs)/30+1,
+        ax.legend(lines, macs, loc='lower left', ncol=len(macs)//30+1,
             handler_map={matplotlib.lines.Line2D: MyLine2DHandler()}, prop={'family':'monospace', 'size':8})
     # avoid too much space around our data by defining set
     space = 5*60 # 5 minutes
@@ -258,7 +257,7 @@ def plot_data(macs, times, args):
 
     # and tada !
     if args.image:
-        fig.set_size_inches(float(config.HEIGHT)/config.DPI, float(config.WIDTH)/config.DPI)
+        fig.set_size_inches(config.HEIGHT/config.DPI, config.WIDTH/config.DPI)
         fig.savefig(args.image, dpi=config.DPI)
         #fig.savefig('test.svg', format='svg')
     else:
@@ -291,10 +290,10 @@ def main():
     # TODO: fix that
     if args.continuous:
         if not args.image:
-            print 'Error: --continuous does not currently work without using an image. Please use -i/--image'
+            print('Error: --continuous does not currently work without using an image. Please use -i/--image')
             sys.exit(-1)
         if args.pcap:
-            print 'Error: --continuous does not work with --pcap'
+            print('Error: --continuous does not work with --pcap')
             sys.exit(-1)
 
     # parse span_time
@@ -302,7 +301,7 @@ def main():
     try:
         sp = int(args.span_time[:-1])
     except ValueError:
-        print 'Error: --span-time argument should be of the form [digit]...[d|h|m]'
+        print('Error: --span-time argument should be of the form [digit]...[d|h|m]')
         sys.exit(-1)
     if args.span == 'd':
         args.span_time = sp*NUMOFSECSINADAY
@@ -311,17 +310,17 @@ def main():
     elif args.span == 'm':
         args.span_time = sp*60
     else:
-        print 'Error: --span-time postfix could only be d or h or m'
+        print('Error: --span-time postfix could only be d or h or m')
         sys.exit(-1)
 
     if args.knownmac is None:
         args.knownmac = config.KNOWNMAC
 
     if args.pcap and not os.path.exists(args.pcap):
-        print 'Error: pcap file not found %s' % args.pcap
+        print(f'Error: pcap file not found {args.pcap}', file=sys.stderr)
         sys.exit(-1)
     if not os.path.exists(args.db):
-        print 'Error: file not found %s' % args.db
+        print(f'Error: file not found {args.db}', file=sys.stderr)
         sys.exit(-1)
 
     if args.start:
@@ -333,7 +332,7 @@ def main():
                 date = time.strptime('%sT12:00' % args.start, '%Y-%m-%dT%H:%M')
                 start_time = time.mktime(date)
             except ValueError:
-                print "Error: can't parse date timestamp"
+                print(f"Error: can't parse date timestamp", file=sys.stderr)
                 sys.exit(-1)
         end_time = start_time + args.span_time
     else:
@@ -345,14 +344,14 @@ def main():
     fig = None
     while True:
         if args.verbose:
-            print ':: Gathering data'
+            print(':: Gathering data')
         macs, times = get_data(args)
         if len(times) == 0 or len(macs) == 0 and not args.continuous:
-            print 'Error: nothing to plot'
+            print(f'Error: nothing to plot', file=sys.stderr)
             sys.exit(-1)
 
         if args.verbose:
-            print ':: Plotting data'
+            print(':: Plotting data')
         plot_data(macs, times, args)
 
         if not args.continuous:

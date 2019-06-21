@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 import sqlite3
 import argparse
@@ -6,10 +6,6 @@ import time
 import sys
 import os.path
 
-# for correct handling of encoding when piping to less
-import codecs
-import locale
-sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
 # avoid IOError when quitting less
 from signal import signal, SIGPIPE, SIG_DFL
 signal(SIGPIPE, SIG_DFL)
@@ -36,7 +32,7 @@ def median(lst):
     if n % 2 == 1:
         return sorted(lst)[n//2]
     else:
-        return sum(sorted(lst)[n//2-1:n//2+1])/2.0
+        return sum(sorted(lst)[n//2-1:n//2+1])//2
 
 def parse_ts(ts):
     try:
@@ -46,7 +42,7 @@ def parse_ts(ts):
             date = time.strptime(ts, '%Y-%m-%d')
             date = time.strptime('%sT12:00' % ts, '%Y-%m-%dT%H:%M')
         except ValueError:
-            print "Error: can't parse date timestamp"
+            print("Error: can't parse date timestamp", file=sys.stderr)
             sys.exit(-1)
     t = time.mktime(date)
     return t
@@ -123,11 +119,11 @@ def main():
         args.day_by_day = False
 
     if args.day and (args.before or args.after):
-        print 'Error: --day conflicts with --after or --before'
+        print('Error: --day conflicts with --after or --before', file=sys.stderr)
         sys.exit(-1)
 
     if args.day_by_day and not args.mac:
-        print 'Error: --day-by-day needs a --mac switch'
+        print('Error: --day-by-day needs a --mac switch', file=sys.stderr)
         sys.exit(-1)
 
     before = None
@@ -138,11 +134,11 @@ def main():
         before = parse_ts(args.before)
 
     if not os.path.exists(args.db):
-        print 'Error: file not found %s' % args.db
+        print(f'Error: file not found {args.db}', file=sys.stderr)
         sys.exit(-1)
 
     if args.ssid and args.mac:
-        print ':: Ignoring --mac switch'
+        print(':: Ignoring --mac switch')
         args.mac = None
 
     conn = sqlite3.connect(args.db)
@@ -159,7 +155,7 @@ def main():
         c.execute('select id from ssid where name=?', (args.ssid,))
         ssid = c.fetchone()
         if ssid is None:
-            print 'Error: ssid not found'
+            print('Error: ssid not found', file=sys.stderr)
             conn.close()
             sys.exit(-1)
         c.execute('select distinct mac from probemon where ssid=?', (ssid[0],))
@@ -173,7 +169,7 @@ def main():
                 continue
             macs.append(mac)
 
-        print '%s: %s' % (args.ssid, ', '.join(macs))
+        print(f'{args.ssid} : {", ".join(macs)}')
         conn.close()
         return
 
@@ -200,7 +196,7 @@ def main():
                 ssid = ssid[:MAX_SSID_LENGTH-3]+ '...'
             else:
                 ssid = ssid.ljust(MAX_SSID_LENGTH)
-            print '\t'.join([t, m, mc, ssid, str(rssi)])
+            print('\t'.join([t, m, mc, ssid, str(rssi)]))
 
         conn.close()
         return
@@ -209,7 +205,7 @@ def main():
         # gather stats day by day for args.mac
         stats = {}
         for row in c.fetchall():
-            if row[1] not in stats.keys():
+            if row[1] not in list(stats.keys()):
                 stats[row[1]] = {'vendor': row[2]}
             day = time.strftime('%Y-%m-%d', time.localtime(row[0]))
             if day in stats[row[1]]:
@@ -223,18 +219,17 @@ def main():
                 stats[row[1]][day] = {'rssi': [row[4]], 'first': row[0], 'last': row[0]}
         conn.close()
 
-        for mac in stats.keys():
+        for mac in list(stats.keys()):
             vendor = stats[mac]['vendor']
             del stats[mac]['vendor']
             days = sorted(stats[mac].keys())
-            print 'MAC: %s, VENDOR: %s' % (mac, vendor)
+            print(f'MAC: {mac}, VENDOR: {vendor}')
             for d in days:
                 rssi = stats[mac][d]['rssi']
                 first = time.strftime('%H:%M:%S', time.localtime(stats[mac][d]['first']))
                 last = time.strftime('%H:%M:%S', time.localtime(stats[mac][d]['last']))
-                print '  %s: [%s-%s]' % (d, first, last),
-                print '  RSSI: #: %4d, min: %3d, max: %3d, avg: %3d, median: %3d' % (
-                    len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
+                print(f'  {d}: [{first}-{last}]', end=' ')
+                print(f'  RSSI: #: {len(rssi):4d}, min: {min(rssi):3d}, max: {max(rssi):3d}, avg: {sum(rssi)//len(rssi):3d}, median: {median(rssi):3d}')
         return
 
     if args.list_mac_ssids:
@@ -247,11 +242,11 @@ def main():
                 ssids[ssid] = set([row[1]])
             else:
                 ssids[ssid].add(row[1])
-        si = sorted(ssids.items(), cmp=lambda x,y:cmp(len(x[1]), len(y[1])))
+        si = sorted(list(ssids.items()), key=lambda x:len(x[1]))
         si.reverse()
         for k,v in si:
             if len(v) > 1:
-                print '%s: %s' % (k, ', '.join(v))
+                print(f'{k}: {", ".join(v)}')
 
         conn.close()
         return
@@ -277,25 +272,24 @@ def main():
     conn.close()
 
     # sort on frequency of appearence of a mac
-    tmp = [(k,len(v['rssi'])) for k,v in macs.items()]
+    tmp = [(k,len(v['rssi'])) for k,v in list(macs.items())]
     tmp = reversed(sorted(tmp, key=lambda k:k[1]))
 
     # print our stats
     for k,_ in tmp:
         v = macs[k]
         laa = ' (LAA)' if is_local_bit_set(k) else ''
-        print 'MAC: %s%s, VENDOR: %s' % (k, laa, v['vendor'])
-        print '  SSIDs: %s' % ','.join(sorted(v['ssid']))
+        print(f'MAC: {k}{laa}, VENDOR: {v["vendor"]}')
+        print(f'  SSIDs: {",".join(sorted(v["ssid"]))}')
         rssi = v['rssi']
         if rssi != []:
-            print '  RSSI: #: %d, min: %d, max: %d, avg: %d, median: %d' % (
-                len(rssi), min(rssi), max(rssi), sum(rssi)/len(rssi), median(rssi))
+            print(f'  RSSI: #: {len(rssi):4d}, min: {min(rssi):3d}, max: {max(rssi):3d}, avg: {sum(rssi)//len(rssi):3d}, median: {median(rssi):3d}')
         else:
-            print '  RSSI: Nothing found.'
+            print('  RSSI: Nothing found.')
 
         first = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['first']))
         last = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(v['last']))
-        print '  First seen at %s and last seen at %s' % (first, last)
+        print(f'  First seen at {first} and last seen at {last}')
 
 if __name__ == '__main__':
     try:

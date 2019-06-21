@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 # -*- encoding: utf-8 -*-
 
 import time
@@ -14,7 +14,7 @@ import struct
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe requests"
-VERSION = '0.5'
+VERSION = '0.6'
 
 MAX_QUEUE_LENGTH = 50
 MAX_ELAPSED_TIME = 60 # seconds
@@ -173,9 +173,11 @@ def build_packet_cb(conn, c, stdout, ignored):
             parsed_mac = netaddr.EUI(packet.addr2)
             vendor = parsed_mac.oui.registration().org
         except netaddr.core.NotRegisteredError as e:
-            vendor = u'UNKNOWN'
+            vendor = 'UNKNOWN'
         except IndexError as e:
-            vendor = u'UNKNOWN'
+            vendor = 'UNKNOWN'
+        except UnicodeDecodeError as u:
+            vendor = 'UNKNOWN'
 
         try:
             rssi = packet.dBm_AntSignal
@@ -186,11 +188,11 @@ def build_packet_cb(conn, c, stdout, ignored):
         try:
             ssid = packet.info.decode('utf-8')
         except AttributeError as a:
-            ssid = u''
+            ssid = ''
         except UnicodeDecodeError as u:
             # encode the SSID in base64 because it will fail
             # to be inserted into the db otherwise
-            ssid = u'b64_%s' % base64.b64encode(packet.info)
+            ssid = 'b64_%s' % base64.b64encode(packet.info)
         fields = [now, packet.addr2, vendor, ssid, rssi]
 
         if packet.addr2 not in ignored:
@@ -198,7 +200,7 @@ def build_packet_cb(conn, c, stdout, ignored):
 
             if stdout:
                 if fields[1] in config.KNOWNMAC:
-                    fields[1] = u'%s%s%s%s' % (Colors.bold, Colors.red, fields[1], Colors.endc)
+                    fields[1] = '%s%s%s%s' % (Colors.bold, Colors.red, fields[1], Colors.endc)
                 # convert time to iso
                 fields[0] = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(now))
                 # strip mac vendor string to MAX_VENDOR_LENGTH chars, left padded with space
@@ -213,7 +215,7 @@ def build_packet_cb(conn, c, stdout, ignored):
                     ssid = ssid.ljust(MAX_SSID_LENGTH)
                 fields[2] = vendor
                 fields[3] = ssid
-                print u'%s\t%s\t%s\t%s\t%d' % tuple(fields)
+                print('%s\t%s\t%s\t%s\t%d' % tuple(fields))
 
     return packet_callback
 
@@ -253,16 +255,16 @@ def close_db(conn):
     except sqlite3.ProgrammingError as e:
         pass
 
-def main():
+def main(conn, c):
     # sniff on specified channel
-    cmd = 'iw dev %s set channel %d' % (args.interface, args.channel)
+    cmd = f'iw dev {args.interface} set channel {args.channel}'
     try:
         subprocess.check_call(cmd.split(' '))
-    except subprocess.CalledProcessError:
-        print 'Error: failed to switch to channel %d in interface %s' % (args.channel, args.interface)
+    except subprocess.CalledProcessError as c:
+        print(f'Error: failed to switch to channel {args.channel} in interface {args.interface}', file=sys.stderr)
         sys.exit(-1)
 
-    print ":: Started listening to probe requests on channel %d on interface %s" % (args.channel, args.interface)
+    print(f':: Started listening to probe requests on channel {args.channel} on interface {args.interface}')
     sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, config.IGNORED),
         store=0, filter='wlan type mgt subtype probe-req')
 
@@ -279,20 +281,20 @@ if __name__ == '__main__':
         args = parser.parse_args()
 
         if args.version:
-            print '%s %s' % (NAME, VERSION)
-            print '%s' % DESCRIPTION
-            print "© 2018-2019 solsTiCe d'Hiver, GPL 3 licensed"
+            print(f'{NAME} {VERSION}')
+            print(f'{DESCRIPTION}')
+            print("© 2018-2019 solsTiCe d'Hiver, GPL 3 licensed")
             sys.exit(1)
 
         if not args.interface:
-            print 'Error: argument -i/--interface is required'
+            print('Error: argument -i/--interface is required', file=sys.stderr)
             sys.exit(-1)
 
         if args.ignore is not None:
             config.IGNORED = args.ignore
 
         # only import scapy here to avoid delay if error in argument parsing
-        print 'Loading scapy...'
+        print('Loading scapy...')
         from scapy.all import sniff
 
         conn = sqlite3.connect(args.db)
@@ -300,7 +302,7 @@ if __name__ == '__main__':
         atexit.register(close_db, conn)
         init_db(conn, c)
 
-        main()
+        main(conn, c)
     except KeyboardInterrupt as e:
         pass
     finally:
