@@ -238,7 +238,10 @@ def init_db(conn, c):
         foreign key(ssid) references ssid(id)
         );'''
     c.execute(sql)
+    sql = 'create index if not exists idx_probemon_date on probemon(date);'
+    c.execute(sql)
     conn.commit()
+
     sql = 'pragma synchronous = normal;'
     c.execute(sql)
     sql = 'pragma temp_store = 2;' # to store temp table and indices in memory
