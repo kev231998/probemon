@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>mapot</title>
+    <meta name='description' content="A page showing MAC addresses presence over time">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/static/img/favicon.png">
+    <link rel="stylesheet" href="/static/css/bootstrap-4.3.1.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-datepicker3.min.css">
+
+    <script src="/static/js/jquery-3.4.1.min.js"></script>
+    <script src="/static/js/bootstrap-4.3.1.min.js"></script>
+    <script src="/static/js/moment-2.24.0.min.js"></script> <!-- needed for time axis in chart.js -->
+    <script src="/static/js/chart-2.8.0.min.js"></script>
+    <script src="/static/js/bootstrap-datepicker.min.js"></script>
+    <style>
+      #mac { font-weight: bold; font-family: monospace;}
+      .small-mono {font-size: 0.9rem; font-family: monospace;}
+      #table-wrapper { height: 20rem; overflow-y: scroll;}
+      .rssi { width: 6ch;}
+      .mtime { color: grey; margin: 0;}
+      #collecting {font-size:1rem; margin-top: 10px; margin-bottom:10px;}
+      .ts { width: 19ch;}
+      td.va-middle { vertical-align: middle; }
+      @media (min-width: 768px) {
+        .modal-dialog { max-width: 600px;}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="m-2">
+        <h1>Mapot <img class="collapse" id="loading" src="/static/img/loading.gif" width="48" height="48"></h1>
+        <p class="mtime small-mono"><span class="d-inline d-sm-inline d-md-none">DB mtime</span><span class="d-none d-sm-none d-md-inline">Last modification of database</span>: <span id="dbtime">2001-01-01 00:00:00</span></p>
+      </div>
+      <div class="row">
+        <div class="col-lg-9">
+          <div class="table-responsive d-block d-sm-block d-md-none">
+            <table class="table table-sm table-striped">
+              <thead><tr><th scope="col" id="color"></th>
+                <th scope="col" class="sortable">MAC</th><th scope="col" class="sortable">Count</th>
+                <th scope="col" class="sortable">Min</th><th scope="col" class="sortable">Max</th>
+                <th scope="col" class="sortable">Avg</th><th scope="col" class="sortable">Median</th>
+                <th scope="col" class="ts sortable">First seen</th><th scope="col" class="ts sortable">Last seen</th>
+                <th scope="col">Probed SSIDs</th></tr></thead>
+              <tbody id="macs">
+                <tr><td colspan="10"><p id="collecting">Please wait while we are collecting the data</p></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <canvas class="d-none d-sm-none d-md-block" id="myChart" width="1366" height="768" aria-label="chart for mapot" role="img">
+            <p>Your browser does not support the canvas element</p>
+          </canvas>
+        </div>
+        <div class="col-lg-3">
+          <div id="dp" data-date="01/01/2011"></div>
+          <br>
+          <p><button class="btn btn-primary" id="refresh"> Refresh</button>
+            <span class="alert alert-info collapse" id="msg">Downloading data...</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header pb-1">
+            <h4 class="modal-title" id="myModalLabel">Details for <span id="mac">11:22:33:44:55:66</span></h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <table class="table table-sm table-borderless">
+              <tbody>
+                <tr><th>Vendor</th><td id="vendor" class="small-mono va-middle">Vendor></td></tr>
+                <tr><th>Probed SSID(s)</th><td id="ssids" class="small-mono va-middle"></td></tr>
+              </tbody>
+            </table>
+            <h5>Stats for RSSI values</h5>
+            <table class="table table-sm">
+                <thead><tr><th scope="col">Count</th><th scope="col">Min</th><th scope="col">Max</th>
+                  <th scope="col">Average</th><th scope="col">Median</th></tr></thead>
+              <tbody id="stats" class="small-mono">
+                <tr><td id="count">?</td><td id="min">?</td><td id="max">?</td><td id="avg">?</td><td id="mdn">?</td></tr>
+              </tbody>
+            </table>
+            <h5>RSSI values over time</h5>
+            <canvas id="RSSI" aria-label="RSSI chart for a given mac" role="img"></canvas>
+            <h5><a href="#collapseLog" data-toggle="collapse">Probe requests log</a></h5>
+            <div class="collapse" id="collapseLog">
+              <div class="table-responsive" id="table-wrapper">
+                <table class="table table-sm">
+                  <thead>
+                    <tr><th scope="col" class="ts">Timestamp</th><th scope="col">RSSI</th><th scope="col">SSID</th></tr>
+                  </thead>
+                  <tbody id="mac_probes" class="small-mono">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+<script src="/static/js/mapot.js?v=7"></script>
+</html>

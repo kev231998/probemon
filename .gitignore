@@ -1,9 +1,11 @@
 /archives/
-/src/www/
 /src/scripts/*
 /src/shift-time.py
-/src/probemon.db
-/src/probemon.db-journal
+probemon.db
+probemon.db-journal
 /sync.sh
 *.pyc
 *.bak
+/src/www/protobuf-test.tar.gz
+/src/www/probemon-www.fcgi
+/src/www/www.tar.gz

@@ -7,6 +7,14 @@ This simple python script uses under the hood *scapy*.
 A script called *plot.py* using *matplotlib* allows you to draw a chart to easily visualize the mac addresses presence.
 Another tool presents statistics about the mac addresses present in the database; it is just a helper script to query the database.
 
+There is also a **flask app** to serve charts/plots and stats of the sqlite3 db. Use a real webserver like *gunicorn* or whatever you like. Look at [your deployement options](http://flask.pocoo.org/docs/1.0/deploying/#self-hosted-options) to find how to serve the app with a webserver.
+
+The dependencies are:
+* for probemon.py: scapy, python-netaddr, lru-dict
+* for stats.py: None
+* for plot.py: matplotlib, cycler
+* for mapot.py: flask, flask-caching
+
 ## Usage
 ### probemon.py
 You must enable monitor mode on your interface before running `probemon.py`. You can use, for example, `airmon-ng start wlan0` where wlan0 is your interface name. Now, use *wlan0mon* with `probemon.py`.
@@ -29,6 +37,18 @@ optional arguments:
   -s, --stdout          also log probe request to stdout
   -v, --version         show version and exit
 ```
+
+## mapot.py
+A flask *app* to serve in real time the probe requests stats and charts.
+
+### How to run it ?
+You can serve the *app* with a webserver like *gunicorn*.
+For example:
+
+    gunicorn -w 4 -b 127.0.0.1:4000 mapot:app
+
+
+More details in the *README.md* in `src/www`
 
 ### plot script
 This script simplifies the analysis of the recorded data by drawing a chart that plots the presence of
@@ -109,11 +129,6 @@ optional arguments:
   -s SSID, --ssid SSID  look up for mac that have probed for that ssid
   -z, --zero            filter rssi value of 0
 ```
-
-The dependencies are:
-* for probemon.py: scapy, python-netaddr, lru-dict
-* for stats.py: None
-* for plot.py: matplotlib, cycler
 
 ## Locally Administered Addresses
 
