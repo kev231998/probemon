@@ -6,6 +6,3 @@ probemon.db-journal
 /sync.sh
 *.pyc
 *.bak
-/src/www/protobuf-test.tar.gz
-/src/www/probemon-www.fcgi
-/src/www/www.tar.gz
