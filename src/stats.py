@@ -141,7 +141,7 @@ def main():
         print(':: Ignoring --mac switch')
         args.mac = None
 
-    conn = sqlite3.connect(args.db)
+    conn = sqlite3.connect(f'file:{args.db}?mode=ro', uri=True)
     c = conn.cursor()
     sql = 'pragma query_only = on;'
     c.execute(sql)

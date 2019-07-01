@@ -55,7 +55,7 @@ def get_data(args):
                 ts[packet.addr2] = [packet.time]
     else:
         # sqlite3
-        conn = sqlite3.connect(args.db)
+        conn = sqlite3.connect(f'file:{args.db}?mode=ro', uri=True)
         c = conn.cursor()
         sql = 'pragma query_only = on;'
         c.execute(sql)
