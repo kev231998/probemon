@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package probemon;
+
+message Probes {
+  string mac = 1;
+  string vendor = 2;
+  bool known = 3;
+  message Ssid {
+    string name = 1;
+  }
+  repeated Ssid ssids = 4;
+
+  message Probereq {
+    int64 timestamp = 1;
+    sint32 rssi = 2;
+    int32 ssid = 3;
+  }
+
+  repeated Probereq probereq = 5;
+}
+
+message MyData {
+  repeated Probes probes = 1;
+}

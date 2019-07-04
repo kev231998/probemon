@@ -6,3 +6,4 @@ probemon.db-journal
 /sync.sh
 *.pyc
 *.bak
+node_modules/

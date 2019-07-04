@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 import tempfile
 import atexit
+import probe_pb2
 
 sys.path.insert(0, '..')
 from stats import is_local_bit_set, build_sql_query, median
@@ -246,6 +247,7 @@ def create_app():
         macs = request.args.get('macs')
         zero = request.args.get('zero')
         today = request.args.get('today')
+        output = request.args.get('output', default='json')
 
         cur = get_db().cursor()
         # to store temp table and indices in memory
@@ -304,7 +306,29 @@ def create_app():
                 'probereq': [{'ts': int(f[0]*1000), 'rssi':f[1], 'ssid': ssids.index(f[2])} for f in p]}
             data.append(t)
 
-        resp = make_response(jsonify(data))
+        if output == 'json':
+            resp = make_response(jsonify(data))
+        elif output == 'protobuf':
+            res = probe_pb2.MyData()
+            for t in data:
+                p = res.probes.add()
+                p.mac = t['mac']
+                p.vendor = t['vendor']
+                for s in t['ssids']:
+                    sl = p.ssids.add()
+                    sl.name = s
+                try:
+                    p.known = t['known']
+                except KeyError as k:
+                    p.known = False
+                for f in t['probereq']:
+                    pr = p.probereq.add()
+                    pr.timestamp = f['ts']
+                    pr.rssi = f['rssi']
+                    pr.ssid = f['ssid']
+            resp = make_response(res.SerializeToString())
+            resp.headers['Content-Type'] = 'application/x-protobuf'
+
         if not today:
             resp.headers['Cache-Control'] = 'max-age=21600'
         return resp

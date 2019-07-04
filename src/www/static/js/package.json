@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "browserify probe_pb.js -o protobuf.js"
+  },
+  "dependencies": {
+    "browserify": "^16.2.3",
+    "google-protobuf": "^3.9.0-rc.1"
+  }
+}

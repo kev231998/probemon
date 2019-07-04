@@ -49,17 +49,21 @@ $(function() {
     // repurpose our data in a format suitable for chart.js chart
     var gen = colorGenerator(), color;
     for (let d of data) {
-      if (d.known) {
+      if (d.getKnown()) {
         color = '#d62728';
-      } else if (d.mac == 'LAA') {
+      } else if (d.getMac() == 'LAA') {
         color = '#7f7f7f';
       } else {
         color = gen.next().value;
       }
+      var ssids = [];
+      for (let s of d.getSsidsList()) {
+        ssids.push(s.getName());
+      }
       var s = {
-        label: d.mac,
-        vendor: d.vendor,
-        ssids: d.ssids,
+        label: d.getMac(),
+        vendor: d.getVendor(),
+        ssids: ssids,
         data: [],
         fill: false,
         pointStyle: 'line',
@@ -74,8 +78,8 @@ $(function() {
         borderWidth: 1,
         borderColor: color+'44', // same as plot but with less alpha
       };
-      for (let p of d.probereq) {
-        s.data.push({'x': p.ts, 'y': data.length-1-n, 'rssi': p.rssi, 'ssid': p.ssid});
+      for (let p of d.getProbereqList()) {
+        s.data.push({'x': p.getTimestamp(), 'y': data.length-1-n, 'rssi': p.getRssi(), 'ssid': p.getSsid()});
       }
       ds.push(s);
       n += 1;
@@ -303,85 +307,95 @@ $(function() {
       _firstseen = moment(after).valueOf()
       _lastseen = moment(before).valueOf();
     }
-    $.ajax({
-      url: url,
-      dataType: 'json',
-    }).done(function(data) {
-      if (data.length == 0) {
-        $('#msg').removeClass('alert-info').addClass('alert-danger').text('No data found');
-        $('#msg').fadeOut(5000, function() { $('#msg').text('Downloading data...'); });
-        $('#loading').hide();
-        if (chart !== null) {
-          chart.clear();
-          _ds = [];
-        }
-        return false;
-      }
-      $('#msg').hide();
-      $('#loading').hide();
-      _ds = repack(data);
-      if ($('#main-chart').is(':visible')) {
-       // don't show the chart on mobile
-       if (chart === null) {
-         drawMainChart(ctx, _ds);
-       } else {
-         updateMainChart(chart, _ds);
-       }
-      } else {
-        // but use a table for mobile
-        var macs = '', c = 0, color;
-        var gen = colorGenerator();
-        for (let d of data) {
-          if (d.known) {
-            color = '#d62728';
-          } else if (d.mac == 'LAA') {
-            color = '#7f7f7f';
-          } else {
-            color = gen.next().value;
-          }
-          var min = 100, max= -100, avg = 0, rssis = [];
-          for (let p of d.probereq) {
-            min = Math.min(min, p.rssi);
-            max = Math.max(max, p.rssi);
-            avg += p.rssi;
-            rssis.push(p.rssi);
-          }
-          var ssids = [...d.ssids];
-          if (ssids.indexOf('') > -1) {
-            ssids.splice(ssids.indexOf(''), 1);
-          }
-          macs += '<tr class="small-mono mac-stats"><td style="background-color:'+color+'"></td>';
-          macs += '<td>'+d.mac+'</td>';
-          macs += '<td>'+d.probereq.length+'</td>';
-          macs += '<td>'+min+'</td>';
-          macs += '<td>'+max+'</td>';
-          macs += '<td>'+(avg/d.probereq.length).toFixed(1)+'</td>';
-          macs += '<td>'+median(rssis)+'</td>';
-          macs += '<td class="ts">'+moment(d.probereq[0].ts).format('HH:mm:ss')+'</td>';
-          macs += '<td class="ts">'+moment(d.probereq[d.probereq.length-1].ts).format('HH:mm:ss')+'</td>';
-          macs += '<td>'+(ssids.join(', ')||'&lt;none&gt;')+'</td></tr>';
-        }
-        $('#macs').html(macs);
-        // but use the same modal
-        $('.mac-stats').click(function(e) {
-          e.preventDefault();
-          $('#main-modal').show();
-          var mac = $(this).children('td').eq(1).text();
-          var indx = 0;
-          for (let d of _ds) {
-            if (d.label == mac) {
-              break;
+    // using protobuf
+    fetch(url+'&output=protobuf').then(function(resp) {
+      if (resp.ok) {
+        resp.arrayBuffer().then(function(arrayBuffer) {
+          var byteArray = new Uint8Array(arrayBuffer);
+          var raw_data = proto.probemon.MyData.deserializeBinary(byteArray);
+          var data = raw_data.getProbesList();
+
+          if (data.length == 0) {
+            $('#msg').removeClass('alert-info').addClass('alert-danger').text('No data found');
+            $('#msg').fadeOut(5000, function() { $('#msg').text('Downloading data...'); });
+            $('#loading').hide();
+            if (chart !== null) {
+              chart.clear();
+              _ds = [];
             }
-            indx += 1;
+            return false;
           }
-          updateRSSIModal(_ds[indx]);
+          $('#msg').hide();
+          $('#loading').hide();
+          _ds = repack(data);
+          if ($('#main-chart').is(':visible')) {
+           // don't show the chart on mobile
+           if (chart === null) {
+             drawMainChart(ctx, _ds);
+           } else {
+             updateMainChart(chart, _ds);
+           }
+          } else {
+            // but use a table for mobile
+            var macs = '', c = 0, color;
+            var gen = colorGenerator();
+            for (let d of data) {
+              if (d.getKnown()) {
+                color = '#d62728';
+              } else if (d.getMac() == 'LAA') {
+                color = '#7f7f7f';
+              } else {
+                color = gen.next().value;
+              }
+              var min = 100, max= -100, avg = 0, rssis = [];
+              var prl = d.getProbereqList();
+              for (let p of prl) {
+                min = Math.min(min, p.getRssi());
+                max = Math.max(max, p.getRssi());
+                avg += p.getRssi();
+                rssis.push(p.getRssi());
+              }
+              var ssids = [];
+              for (let s of d.getSsidsList()) {
+                ssids.push(s.getName());
+              }
+              if (ssids.indexOf('') > -1) {
+                ssids.splice(ssids.indexOf(''), 1);
+              }
+              macs += '<tr class="small-mono mac-stats"><td style="background-color:'+color+'"></td>';
+              macs += '<td>'+d.getMac()+'</td>';
+              macs += '<td>'+prl.length+'</td>';
+              macs += '<td>'+min+'</td>';
+              macs += '<td>'+max+'</td>';
+              macs += '<td>'+(avg/prl.length).toFixed(1)+'</td>';
+              macs += '<td>'+median(rssis)+'</td>';
+              macs += '<td class="ts">'+moment(prl[0].getTimestamp()).format('HH:mm:ss')+'</td>';
+              macs += '<td class="ts">'+moment(prl[prl.length-1].getTimestamp()).format('HH:mm:ss')+'</td>';
+              macs += '<td>'+(ssids.join(', ')||'&lt;none&gt;')+'</td></tr>';
+            }
+            $('#macs').html(macs);
+            // but use the same modal
+            $('.mac-stats').click(function(e) {
+              e.preventDefault();
+              $('#main-modal').show();
+              var mac = $(this).children('td').eq(1).text();
+              var indx = 0;
+              for (let d of _ds) {
+                if (d.label == mac) {
+                  break;
+                }
+                indx += 1;
+              }
+              updateRSSIModal(_ds[indx]);
+            });
+          }
         });
       }
-    }).fail(function(jq, status, error){
+    }).catch(function(error){
       $('#loading').hide();
       $('#msg').removeClass('alert-info').addClass('alert-danger').text('An error occured when downloading data');
       $('#msg').fadeOut(500, function() { $('#msg').text('Downloading data...'); });
-    }).always(function() {
+    }).finally(function() {
       // restore datepicker back to original state
       $('#dp').datepicker('setStartDate', false).datepicker('setEndDate', today).datepicker('update', date);
       $('#refresh').removeAttr('disabled');
