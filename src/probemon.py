@@ -268,8 +268,18 @@ def main(conn, c):
         sys.exit(-1)
 
     print(f':: Started listening to probe requests on channel {args.channel} on interface {args.interface}')
-    sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, config.IGNORED),
-        store=0, filter='wlan type mgt subtype probe-req')
+    while True:
+        try:
+            sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, config.IGNORED),
+                store=0, filter='wlan type mgt subtype probe-req')
+        except socket.error as e:
+            # bring the interface back up in case it goes down
+            if str(e) == "[Errno 100] Network is down":
+                print("Lost connection to interface. Restoring...", file=sys.stderr)
+                cmd = f'ip link set {args.interface} down'
+                subprocess.call(cmd.split(' '))
+                cmd = f'ip link set {args.interface} up'
+                subprocess.call(cmd.split(' '))
 
 if __name__ == '__main__':
     conn = None
