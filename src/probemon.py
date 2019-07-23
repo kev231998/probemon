@@ -11,6 +11,7 @@ import base64
 from lru import LRU
 import atexit
 import struct
+import socket
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe requests"
@@ -272,10 +273,13 @@ def main(conn, c):
         try:
             sniff(iface=args.interface, prn=build_packet_cb(conn, c, args.stdout, config.IGNORED),
                 store=0, filter='wlan type mgt subtype probe-req')
+        except (Scapy_Exception, OSError) as o:
+            print(f"Error: {args.interface} interface not found", file=sys.stderr)
+            break
         except socket.error as e:
             # bring the interface back up in case it goes down
             if str(e) == "[Errno 100] Network is down":
-                print("Lost connection to interface. Restoring...", file=sys.stderr)
+                print("Error: lost connection to interface. Restoring...", file=sys.stderr)
                 cmd = f'ip link set {args.interface} down'
                 subprocess.call(cmd.split(' '))
                 cmd = f'ip link set {args.interface} up'
@@ -309,6 +313,7 @@ if __name__ == '__main__':
         # only import scapy here to avoid delay if error in argument parsing
         print('Loading scapy...')
         from scapy.all import sniff
+        from scapy.error import Scapy_Exception
 
         conn = sqlite3.connect(args.db)
         c = conn.cursor()
