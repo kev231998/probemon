@@ -95,7 +95,7 @@ optional arguments:
 
 * --pcap allows to get the same plot but using a pcap file instead of the gathered probe request in the db
 
-![Image of chart plotted with plot.py](example.png)
+![Image of chart plotted with plot.py](screenshots/example.png)
 When displayed by the script, one can hover the mouse on the plot to get the mac address, and the timestamp.
 When you export to an image, you lose that feature but you can add a legend instead.
 

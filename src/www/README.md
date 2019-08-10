@@ -29,7 +29,7 @@ You can look at other **options** on how to run the *app* in [the flask document
 ## The UI
 The main UI is a time chart with the probe requests displayed for the last 24 hours.
 
-![Flask app main UI](../../mapot-main-ui.png)
+![Flask app main UI](../../screenshots/mapot-main-ui.png)
 
 On mobile, a table is displayed instead.
 
@@ -43,4 +43,4 @@ By clicking on a mac in the legend on the left of the chart, one gets a popup wi
 - a RSSI chart value over time
 - a complete probe requests log
 
-![Popup over details](../../mapot-popup.png)
+![Popup over details](../../screenshots/mapot-popup.png)
