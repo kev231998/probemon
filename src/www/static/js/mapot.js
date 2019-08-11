@@ -44,7 +44,7 @@ $(function() {
 
   function repack(data) {
     var ds = [], n = 0;
-    var diameter = ($('#myChart').height()-50)/data.length-6;
+    var diameter = ($('#main-chart').height()-50)/data.length-6;
 
     // repurpose our data in a format suitable for chart.js chart
     var gen = colorGenerator(), color;
@@ -129,7 +129,7 @@ $(function() {
     _rssi.options.scales.xAxes[0].time.min = _firstseen;
     _rssi.options.scales.xAxes[0].time.max = _lastseen;
     _rssi.update();
-    $('#myModal').modal('handleUpdate');
+    $('#main-modal').modal('handleUpdate');
   }
 
   function updateRSSIModal(d) {
@@ -139,7 +139,7 @@ $(function() {
     $('#collapseLog').collapse('hide');
 
     var mac = d.label;
-    $('#myModal').modal('show');
+    $('#main-modal').modal('show');
     // don't do any calculation if the data are already there
     if (mac == _mac) {
       return true;
@@ -278,7 +278,7 @@ $(function() {
 
   function refresh(chart, date, after, before) {
     // don't do anything if the modal is opened
-    if (($("#myModal").data('bs.modal') || {})._isShown) {
+    if (($("#main-modal").data('bs.modal') || {})._isShown) {
       return false;
     }
     updateDBTime();
@@ -313,7 +313,7 @@ $(function() {
       $('#msg').hide();
       $('#loading').hide();
       _ds = repack(data);
-      if ($('#myChart').is(':visible')) {
+      if ($('#main-chart').is(':visible')) {
        // don't show the chart on mobile
        if (chart === null) {
          drawMainChart(ctx, _ds);
@@ -358,7 +358,7 @@ $(function() {
         // but use the same modal
         $('.mac-stats').click(function(e) {
           e.preventDefault();
-          $('#myModal').show();
+          $('#main-modal').show();
           var mac = $(this).children('td').eq(1).text();
           var indx = 0;
           for (let d of _ds) {
@@ -382,9 +382,9 @@ $(function() {
   }
 
   // draw initial message on canvas
-  var ctx = document.getElementById('myChart').getContext('2d');
-  ctx.width = $('#myChart').width();
-  ctx.height = $('#myChart').height();
+  var ctx = document.getElementById('main-chart').getContext('2d');
+  ctx.width = $('#main-chart').width();
+  ctx.height = $('#main-chart').height();
   var dx = ctx.width/2;
   var dy = ctx.height/2;
   ctx.font = '30px sans-serif';
