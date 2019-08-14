@@ -66,39 +66,87 @@ def create_app():
         return render_template('index.html.j2')
 
     @app.route('/api/stats/days')
-    @cache.cached(timeout=21600) # 6 hours
+    @cache.cached(timeout=43200, query_string=True) # 12 hours
     def days():
         cur = get_db().cursor()
         # to store temp table and indices in memory
         sql = 'pragma temp_store = 2;'
         cur.execute(sql)
-        try:
-            sql = 'select date from probemon'
-            sql_args = ()
-            cur.execute(sql, sql_args)
-        except sqlite3.OperationalError as e:
-            return jsonify({'status': 'error', 'message': 'sqlite3 db is not accessible'}), 500
+        macs = request.args.getlist('macs')
 
-        days = set()
-        for row in cur.fetchall():
-            t = time.strftime('%Y-%m-%d', time.localtime(row[0]))
-            days.add(t)
-        days = sorted(list(days))
-        missing = []
-        last = datetime.strptime(days[-1], '%Y-%m-%d')
-        day = datetime.strptime(days[0], '%Y-%m-%d')
-        while day != last:
-            d = day.strftime('%Y-%m-%d')
-            if d not in days:
-                missing.append(d)
-            day += timedelta(days=1)
-        data = {'first': days[0], 'last': days[-1], 'missing': missing}
-        return jsonify(data)
+        if macs is None:
+            # return list of days with probes in db
+            try:
+                sql = 'select date from probemon'
+                sql_args = ()
+                cur.execute(sql, sql_args)
+            except sqlite3.OperationalError as e:
+                return jsonify({'status': 'error', 'message': 'sqlite3 db is not accessible'}), 500
+
+            days = set()
+            for row in cur.fetchall():
+                t = time.strftime('%Y-%m-%d', time.localtime(row[0]))
+                days.add(t)
+            days = sorted(list(days))
+            missing = []
+            last = datetime.strptime(days[-1], '%Y-%m-%d')
+            day = datetime.strptime(days[0], '%Y-%m-%d')
+            while day != last:
+                d = day.strftime('%Y-%m-%d')
+                if d not in days:
+                    missing.append(d)
+                day += timedelta(days=1)
+            data = {'first': days[0], 'last': days[-1], 'missing': missing}
+            return jsonify(data)
+        else:
+            # return day-by-day stats for macs
+            try:
+                params = ','.join(['?']*len(macs))
+                sql = f'''select date,mac.address,rssi,ssid.name from probemon
+                 inner join ssid on ssid.id=probemon.ssid
+                 inner join mac on mac.id=probemon.mac
+                 where mac.address in ({params})'''
+                sql_args = macs
+                cur.execute(sql, sql_args)
+            except sqlite3.OperationalError as e:
+                return jsonify({'status': 'error', 'message': 'sqlite3 db is not accessible'}), 500
+            # WARNING: this is copy-pasted from stats.py
+            stats = {}
+            for row in cur.fetchall():
+                if row[1] not in list(stats.keys()):
+                    stats[row[1]] = {'ssids': set()}
+                stats[row[1]]['ssids'].add(row[3])
+                day = time.strftime('%Y%m%d', time.localtime(row[0]))
+                if day in stats[row[1]]:
+                    smd = stats[row[1]][day]
+                    smd['rssi'].append(row[2])
+                    if row[0] > smd['last']:
+                        smd['last'] = row[0]
+                    if row[0] < smd['first']:
+                        smd['first'] = row[0]
+                else:
+                    stats[row[1]][day] = {'rssi': [row[2]], 'first': row[0], 'last': row[0]}
+
+            data = []
+            for mac in list(stats.keys()):
+                md = []
+                for d in sorted(stats[mac].keys()):
+                    if d == 'ssids':
+                        continue
+                    rssi = stats[mac][d]['rssi']
+                    md.append({'day':d, 'count':len(rssi),
+                        'last': int(stats[mac][d]['last']*1000), 'first': int(stats[mac][d]['first']*1000),
+                        'min': min(rssi), 'max': max(rssi), 'avg': sum(rssi)//len(rssi), 'median': median(rssi)})
+                ssids = list(stats[mac]['ssids'])
+                if '' in ssids:
+                    ssids.remove('')
+                data.append({'mac': mac, 'days': md, 'ssids': ssids})
+            return jsonify(data)
 
     @app.route('/api/stats/timestamp')
     @cache.cached(timeout=60)
     def timestamp():
-        # latest modification time of the db
+        '''returns latest modification time of the db'''
         ts = Path(DATABASE).stat().st_mtime
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(ts))
         return jsonify({'timestamp': timestamp})
@@ -106,6 +154,7 @@ def create_app():
     @app.route('/api/stats')
     @cache.cached(timeout=60, query_string=True)
     def stats():
+        '''returns stats for given macs between timestamp'''
         after = request.args.get('after')
         if after is not None:
             try:
@@ -174,6 +223,7 @@ def create_app():
     @app.route('/api/probes')
     @cache.cached(timeout=60, query_string=True)
     def probes():
+        '''returns list of probe requests for given macs between timestamps'''
         after = request.args.get('after')
         if after is not None:
             try:

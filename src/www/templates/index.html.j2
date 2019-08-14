@@ -17,11 +17,12 @@
     <style>
       #mac { font-weight: bold; font-family: monospace;}
       .small-mono {font-size: 0.9rem; font-family: monospace;}
-      #table-wrapper { height: 20rem; overflow-y: scroll;}
+      .table-wrapper { height: 20rem; overflow-y: scroll;}
       .rssi { width: 6ch;}
       .mtime { color: grey; margin: 0;}
       #collecting {font-size:1rem; margin-top: 10px; margin-bottom:10px;}
       .ts { width: 19ch;}
+      .day { width: 13ch;}
       td.va-middle { vertical-align: middle; }
       @media (min-width: 768px) {
         .modal-dialog { max-width: 600px;}
@@ -68,36 +69,72 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header pb-1">
-            <h4 class="modal-title" id="main-modal-modal">Details for <span id="mac">11:22:33:44:55:66</span></h4>
+            <h4 class="modal-title" id="main-modal-title">Details for <span id="mac">11:22:33:44:55:66</span></h4>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           </div>
           <div class="modal-body">
-            <table class="table table-sm table-borderless">
-              <tbody>
-                <tr><th>Vendor</th><td id="vendor" class="small-mono va-middle">Vendor></td></tr>
-                <tr><th>Probed SSID(s)</th><td id="ssids" class="small-mono va-middle"></td></tr>
-              </tbody>
-            </table>
-            <h5>Stats for RSSI values</h5>
-            <table class="table table-sm">
-                <thead><tr><th scope="col">Count</th><th scope="col">Min</th><th scope="col">Max</th>
-                  <th scope="col">Average</th><th scope="col">Median</th></tr></thead>
-              <tbody id="stats" class="small-mono">
-                <tr><td id="count">?</td><td id="min">?</td><td id="max">?</td><td id="avg">?</td><td id="mdn">?</td></tr>
-              </tbody>
-            </table>
-            <h5>RSSI values over time</h5>
-            <canvas id="RSSI" aria-label="RSSI chart for a given mac" role="img"></canvas>
-            <h5><a href="#collapseLog" data-toggle="collapse">Probe requests log</a></h5>
-            <div class="collapse" id="collapseLog">
-              <div class="table-responsive" id="table-wrapper">
-                <table class="table table-sm">
-                  <thead>
-                    <tr><th scope="col" class="ts">Timestamp</th><th scope="col">RSSI</th><th scope="col">SSID</th></tr>
-                  </thead>
-                  <tbody id="mac_probes" class="small-mono">
-                  </tbody>
-                </table>
+            <div id="main-carousel" class="carousel slide" data-ride="carousel" data-interval="false" data-keyboard="false">
+              <div class="carousel-inner">
+                <div class="carousel-item active">
+                  <p class="float-right"><a href="#" id="complete-stats">Overall stats ⟶</span></a></p>
+                  <table class="table table-sm table-borderless">
+                    <tbody>
+                      <tr><th>Vendor</th><td id="vendor" class="small-mono va-middle">Vendor</td></tr>
+                      <tr><th>Probed SSID(s)</th><td id="ssids" class="small-mono va-middle"></td></tr>
+                    </tbody>
+                  </table>
+                  <h5>Stats for RSSI values</h5>
+                  <table class="table table-sm">
+                      <thead><tr><th scope="col">Count</th><th scope="col">Min</th><th scope="col">Max</th>
+                        <th scope="col">Average</th><th scope="col">Median</th></tr></thead>
+                    <tbody id="stats" class="small-mono">
+                      <tr><td id="count">?</td><td id="min">?</td><td id="max">?</td><td id="avg">?</td><td id="mdn">?</td></tr>
+                    </tbody>
+                  </table>
+                  <h5>RSSI values over time</h5>
+                  <canvas id="RSSI" aria-label="RSSI chart for a given mac" role="img">Please wait while we are collecting the data</canvas>
+                  <h5><a href="#collapseLog" data-toggle="collapse">Probe requests log</a></h5>
+                  <div class="collapse" id="collapseLog">
+                    <div class="table-responsive table-wrapper">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr><th scope="col" class="ts">Timestamp</th><th scope="col">RSSI</th><th scope="col">SSID</th></tr>
+                        </thead>
+                        <tbody id="mac_probes" class="small-mono">
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="carousel-item">
+                  <div class="alert alert-light float-right" id="o-loading">Gathering data... <img src="/static/img/loading.gif" width="48" height="48"></div>
+                  <p><a href="#" id="rssi-stats">⟵ RSSI stats</a></p>
+                  <h5>Overall stats</h5>
+                  <table class="table table-sm table-borderless">
+                    <tbody>
+                      <tr><th>First seen</th><td id="first-seen" class="small-mono va-middle">First seen</td></tr>
+                      <tr><th>Last seen</th><td id="last-seen" class="small-mono va-middle">Last seen</td></tr>
+                      <tr><th>Probed SSID(s)</th><td id="o-ssids" class="small-mono va-middle"></td></tr>
+                    </tbody>
+                  </table>
+                  <table class="table table-sm">
+                      <thead><tr><th scope="col">Count</th><th scope="col" title="days of presence">d.o.p.</th><th scope="col">Min</th><th scope="col">Max</th>
+                        <th scope="col">Average</th></tr></thead>
+                    <tbody id="stats" class="small-mono">
+                      <tr><td id="o-count">?</td><td id="o-dop">?</td><td id="o-min">?</td><td id="o-max">?</td><td id="o-avg">?</td></tr>
+                    </tbody>
+                  </table>
+                  <h5>Stats by day of presence</h5>
+                  <div class="table-responsive table-wrapper">
+                    <table class="table table-sm">
+                        <thead><tr><th scope="col">Date</th><th scope="col">First</th><th scope="col">Last</th><th scope="col">Count</th><th scope="col">Min</th><th scope="col">Max</th>
+                          <th scope="col">Average</th><th scope="col">Median</th></tr></thead>
+                      <tbody id="day-stats" class="small-mono">
+                        <tr><td>Requesting server ...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -109,5 +146,5 @@
     </div>
   </body>
 
-<script src="/static/js/mapot.js?v=7"></script>
+<script src="/static/js/mapot.js?v=8"></script>
 </html>

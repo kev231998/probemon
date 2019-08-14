@@ -416,6 +416,53 @@ $(function() {
 
   $('#refresh').trigger('click');
 
+  $('#complete-stats').click(function() {
+    $('.carousel').carousel('next');
+    // reset the panel
+    $('#first-seen, #last-seen, #o-ssids, #o-count, #o-min, #o-max, #o-avg, #o-dop').text('?');
+    $('#day-stats').html('<tr><td>Requesting server ...</td></tr>');
+    $('#o-loading').show();
+    $.ajax({
+      url: '/api/stats/days?macs='+$('#mac').text(),
+      dataType: 'json',
+    }).done(function(data) {
+      if (data.length == 0 || data[0].days.length == 0) {
+        $('#day-stats').html('<tr><td>No data found</td></tr>');
+        $('#o-loading').hide();
+        return;
+      }
+      $('#first-seen').text(moment(data[0].days[0].first).format('YYYY-MM-DD HH:mm:ss'));
+      $('#last-seen').text(moment(data[0].days[data[0].days.length-1].last).format('YYYY-MM-DD HH:mm:ss'));
+      $('#o-ssids').text(data[0].ssids.join(', ') || '<none>');
+      $('#o-dop').text(data[0].days.length);
+      var html = '', count=0, min=100, max=-100, avg, med, sum=0;
+      for (let d of data[0].days) {
+        var day = d.day.substring(0,4)+'-'+d.day.substring(4,6)+'-'+d.day.substring(6,8);
+        html += '<tr><td class="day">'+day+'</td><td>'+moment(d.first).format('HH:mm:ss')+'</td><td>'+moment(d.last).format('HH:mm:ss')+'</td><td>'+d.count+'</td><td>'+d.min+'</td><td>';
+        html += d.max+'</td><td>'+d.avg+'</td><td>'+d.median+'</td></tr>';
+        count += d.count;
+        min = Math.min(min, d.min);
+        if (d.max != 0) max = Math.max(max, d.max);
+        sum += d.avg*d.count;
+      }
+      $('#o-count').text(count);
+      $('#o-min').text(min);
+      $('#o-max').text(max);
+      $('#o-avg').text(Math.round(sum/count));
+      $('#day-stats').html(html);
+      $('#o-loading').hide();
+    }).fail(function(jq, status, error){
+        $('#day-stats').html('<tr><td>An error occured</td></tr>');
+        $('#o-loading').hide();
+    });
+  });
+  $('#rssi-stats').click(function() {
+    $('.carousel').carousel('prev');
+  });
+  $('#main-modal').on('hidden.bs.modal', function (e) {
+    $('.carousel').carousel(0);
+  });
+
   // refresh chart when window is visible again
   $(document).on('visibilitychange', function() {
     if (document.visibilityState == "visible") {
