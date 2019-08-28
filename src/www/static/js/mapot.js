@@ -133,6 +133,9 @@ $(function() {
   }
 
   function updateRSSIModal(d) {
+    if ((d === null) || (typeof d === 'undefined')) {
+      return;
+    }
     // reset mouse cursor to default
     $('html,body').css('cursor','default');
     // collapse possible collapsed toggle
@@ -308,6 +311,10 @@ $(function() {
         $('#msg').removeClass('alert-info').addClass('alert-danger').text('No data found');
         $('#msg').fadeOut(5000, function() { $('#msg').text('Downloading data...'); });
         $('#loading').hide();
+        if (chart !== null) {
+          chart.clear();
+          _ds = [];
+        }
         return false;
       }
       $('#msg').hide();
