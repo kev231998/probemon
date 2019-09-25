@@ -309,16 +309,52 @@ def create_app():
             resp.headers['Cache-Control'] = 'max-age=21600'
         return resp
 
-        @app.errorhandler(InvalidUsage)
-        def handle_invalid_usage(error):
-            response = jsonify(error.to_dict())
-            response.status_code = error.status_code
-            return response
+    @app.route('/api/probes/latest')
+    @cache.cached(timeout=60, query_string=True)
+    def latest():
+        '''returns latest probe requests'''
+        format = request.args.get('format')
+        if format is None:
+            format = 'text'
+
+        cur = get_db().cursor()
+        # to store temp table and indices in memory
+        sql = 'pragma temp_store = 2;'
+        cur.execute(sql)
+
+        sql = '''select date, mac.address, vendor.name, ssid.name, rssi from probemon
+inner join mac on probemon.mac=mac.id
+inner join ssid on probemon.ssid=ssid.id
+inner join vendor on mac.vendor=vendor.id
+order by date desc limit 100'''
+        sql_args = None
+        try:
+            cur.execute(sql)
+        except sqlite3.OperationalError as e:
+            return jsonify({'status': 'error', 'message': 'sqlite3 db is not accessible'}), 500
+
+        # extract data from db
+        text = ''
+        for t, mac, vs, ssid, rssi in cur.fetchall():
+            t = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t))
+            d = (t, int(rssi), ssid)
+            if is_local_bit_set(mac):
+                mac += ' (LAA)'
+            text += f'{t}\t{mac}\t{int(rssi)}\t{vs}\n'
+
+        resp = make_response('\n'.join(reversed(text.strip().split('\n'))))
+        resp.headers['Content-Type'] = 'text/plain'
+        return resp
 
     @app.route('/robots.txt')
     def robot():
         return app.send_static_file('robots.txt')
 
+    @app.errorhandler(InvalidUsage)
+    def handle_invalid_usage(error):
+        response = jsonify(error.to_dict())
+        response.status_code = error.status_code
+        return response
     @app.errorhandler(404)
     def error_404(e):
         return render_template('error.html.j2', error=e), 404
