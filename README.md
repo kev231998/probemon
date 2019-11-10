@@ -1,3 +1,5 @@
+*all your probe requests belong to us*
+
 # probemon
 probemon is a simple command line tool for logging data from 802.11 probe request frames with tools to plot mac presence over time and get statistics.
 
@@ -86,21 +88,21 @@ optional arguments:
   -v, --verbose         be verbose
 ```
 
-* -d/--days specify the number of days that will lapse the chart from 00:00 to 00:00.
-* -k/--knowmac (can be repeated) to specify known mac address that will be colored in red (overwrite mac in config.py).
-* -p/--privacy switch merges all Locally Administered Addresses (MAC) into a single plot. Whether this option is used or not, they are colored in grey.
-* -m/--min allows specifying the minimum of probe requests that are needed to be displayed on the chart.
-* -r/--rssi allows filtering probe request based their RSSI value
-* -s/--start allows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
+* `-d/--days` specify the number of days that will lapse the chart from 00:00 to 00:00.
+* `-k/--knowmac` (can be repeated) to specify known mac address that will be colored in red (overwrite mac in config.py).
+* `-p/--privacy` switch merges all Locally Administered Addresses (MAC) into a single plot. Whether this option is used or not, they are colored in grey.
+* `-m/--min` allows specifying the minimum of probe requests that are needed to be displayed on the chart.
+* `-r/--rssi` allows filtering probe request based their RSSI value
+* `-s/--start` allows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
 
-* --pcap allows to get the same plot but using a pcap file instead of the gathered probe request in the db
+* `--pcap` allows to get the same plot but using a pcap file instead of the gathered probe request in the db
 
 ![Image of chart plotted with plot.py](screenshots/example.png)
 When displayed by the script, one can hover the mouse on the plot to get the mac address, and the timestamp.
 When you export to an image, you lose that feature but you can add a legend instead.
 
 #### Continuous mode
-You can specify the -c/--continuous switch to enable an automatic continuous generation of plot. (Currently only working with image)
+You can specify the `-c/--continuous` switch to enable an automatic continuous generation of plot. (Currently only working with image)
 In one shell, run `./plot.py -i test.png`. Then open test.png in an image viewer, that auto-refresh the image automatically. The image will be updated/regenerated every minute.
 
 ### stats script
@@ -148,4 +150,15 @@ Depending on the type of device (PC/laptop/..., printer, mobile phone/tablet, Io
 
 Even phone using the same OS like android, can behave differently: some send PR every 30 seconds, while others only send PR when the screen is unlocked.
 
-*all your probe requests belong to us*
+# Legality
+
+I am not a lawyer and I can't give you any advice regarding the law.
+But it might not be legal to collect and store probe requests in your country.
+
+Even simply listening to probe requests might not be legal. For example, given the interpretation of *Section 18 U.S. Code § 2511*, it might not be legal to intercept the MAC addresses of devices in a network (?) or in the vicinity (?) in the U.S.A.
+
+In Europe, if you are operating as a business, storing MAC addresses, which are considered private data, might be subject to the *GDPR*.
+
+This is only straching the surface of the legality or illegality of this software.
+
+Use with caution.
