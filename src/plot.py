@@ -172,7 +172,7 @@ def plot_data(macs, times, args):
         else:
             line, = ax.plot(p, q, label=label)
         if args.label:
-            ax.text(end_time, q[-1], label, fontsize=8, color='black', horizontalalignment='right', verticalalignment='center', family='monospace')
+            ax.text(args.end_time, q[-1], label, fontsize=8, color='black', horizontalalignment='right', verticalalignment='center', family='monospace')
         lines.append(line)
 
     # add a grey background on period greater than 15 minutes without data
@@ -203,6 +203,7 @@ def plot_data(macs, times, args):
             pass
 
     ## customize the appearence of our figure/plot
+    ax.xaxis.set_remove_overlapping_locs(False)
     # customize label of major/minor ticks
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(showdate))
     if args.span == 'd':
