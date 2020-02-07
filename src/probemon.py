@@ -193,7 +193,7 @@ def build_packet_cb(conn, c, stdout, ignored):
         except UnicodeDecodeError as u:
             # encode the SSID in base64 because it will fail
             # to be inserted into the db otherwise
-            ssid = 'b64_%s' % base64.b64encode(packet.info)
+            ssid = 'b64_%s' % base64.b64encode(packet.info).decode()
         fields = [now, packet.addr2, vendor, ssid, rssi]
 
         if packet.addr2 not in ignored:
