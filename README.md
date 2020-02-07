@@ -17,8 +17,7 @@ The dependencies are:
 * for plot.py: matplotlib, cycler
 * for mapot.py: flask, flask-caching
 
-## Usage
-### probemon.py
+## probemon.py
 You must enable monitor mode on your interface before running `probemon.py`. You can use, for example, `airmon-ng start wlan0` where wlan0 is your interface name. Now, use *wlan0mon* with `probemon.py`.
 
 ```
@@ -40,6 +39,10 @@ optional arguments:
   -v, --version         show version and exit
 ```
 
+### Note about non utf-8 SSID
+For SSID that we can't decode in utf-8, we can't store them as is in the db. So we encode them in base64 and store prepended with `b64_`.
+
+
 ## mapot.py
 A flask *app* to serve in real time the probe requests stats and charts.
 
@@ -52,7 +55,7 @@ For example:
 
 More details in the *README.md* in `src/www`
 
-### plot script
+## plot script
 This script simplifies the analysis of the recorded data by drawing a chart that plots the presence of
 mac addresses via the recorded probe request.
 
@@ -101,11 +104,11 @@ optional arguments:
 When displayed by the script, one can hover the mouse on the plot to get the mac address, and the timestamp.
 When you export to an image, you lose that feature but you can add a legend instead.
 
-#### Continuous mode
+### Continuous mode
 You can specify the `-c/--continuous` switch to enable an automatic continuous generation of plot. (Currently only working with image)
 In one shell, run `./plot.py -i test.png`. Then open test.png in an image viewer, that auto-refresh the image automatically. The image will be updated/regenerated every minute.
 
-### stats script
+## stats script
 It allows you to request the database about a specific mac address and get statistics about it,
 or filter based on a RSSI value. You can also specify the start time and end time of your request.
 ```
