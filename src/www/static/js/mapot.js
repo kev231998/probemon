@@ -394,7 +394,7 @@ $(function() {
     }).catch(function(error){
       $('#loading').hide();
       $('#msg').removeClass('alert-info').addClass('alert-danger').text('An error occured when downloading data');
-      $('#msg').fadeOut(500, function() { $('#msg').text('Downloading data...'); });
+      $('#msg').fadeOut(5000, function() { $('#msg').text('Downloading data...'); });
     }).finally(function() {
       // restore datepicker back to original state
       $('#dp').datepicker('setStartDate', false).datepicker('setEndDate', today).datepicker('update', date);
