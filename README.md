@@ -80,6 +80,8 @@ optional arguments:
   -m MAC, --mac MAC     only display that mac
   -p, --privacy         merge LAA MAC address
   --pcap PCAP           pcap file to process instead of the db
+  --kismet KISMET       kismet db file to process instead of the db
+  --only-pr             when processing pcap file/kismet db, keep only probe requests
   -r RSSI, --rssi RSSI  minimal value for RSSI
   -s START, --start START
                         start timestamp
@@ -98,7 +100,9 @@ optional arguments:
 * `-r/--rssi` allows filtering probe request based their RSSI value
 * `-s/--start` allows to specify a date (%Y-%m-%d) or a timestamp (without seconds) (%Y-%m-%dT%H:%M) where to begin to draw the chart
 
-* `--pcap` allows to get the same plot but using a pcap file instead of the gathered probe request in the db
+You can produce a similar timeline chart from either a *pcap* file or a *kismet* db file:
+* use `--pcap` to specify a pcap file to process. Every packet is taken into account; but scapy is rather slow to process all the packets. So if you are only interested in probe requests, add `--only-pr` to keep only probe requests, the process will be faster.
+* use `--kismet` to process a *new* kismet db file. By default, all the activity of each wifi mac addresses/devices is used, except AP. If you want only probe requests, use `--only-pr`. This time, using that last option will be slow. If you want only probe requests, to speed things up, you can use `kismet_log_to_pcap` (from python-kismetdb) to convert to a pcap file and then use `--pcap` with `--only-pr` instead.
 
 ![Image of chart plotted with plot.py](screenshots/example.png)
 When displayed by the script, one can hover the mouse on the plot to get the mac address, and the timestamp.

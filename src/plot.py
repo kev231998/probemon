@@ -15,6 +15,7 @@ import os.path
 import os
 import re
 from scapy.all import sniff
+from scapy.layers import dot11
 
 IS_WINDOW_OPENED = False
 NUMOFSECSINADAY = 60*60*24
@@ -44,7 +45,10 @@ def get_data(args):
     if args.pcap:
         if args.verbose:
             print(f':: Processing pcap file {args.pcap}')
-        packets = sniff(offline=args.pcap, verbose=0, filter='wlan type mgt subtype probe-req')
+        if args.only_pr:
+            packets = sniff(offline=args.pcap, verbose=0, filter='wlan type mgt subtype probe-req')
+        else:
+            packets = sniff(offline=args.pcap, verbose=0)
         for packet in packets:
             if packet.addr2 in config.IGNORED:
                 continue
@@ -53,6 +57,52 @@ def get_data(args):
                 ts[packet.addr2].append(packet.time)
             else:
                 ts[packet.addr2] = [packet.time]
+    elif args.kismet:
+        if args.verbose:
+            print(f':: Processing kismet file {args.kismet}')
+        # sqlite3
+        conn = sqlite3.connect(f'file:{args.kismet}?mode=ro', uri=True)
+        c = conn.cursor()
+        sql = 'pragma query_only = on;'
+        c.execute(sql)
+        sql = 'pragma temp_store = 2;' # to store temp table and indices in memory
+        c.execute(sql)
+        sql = 'pragma journal_mode = off;' # disable journal for rollback (we don't use this)
+        c.execute(sql)
+        conn.commit()
+
+        sql = 'select ts_sec, ts_usec, lower(sourcemac), lower(destmac), packet from packets where phyname="IEEE802.11";'
+        c.execute(sql)
+        for row in c.fetchall():
+            if args.only_pr:
+                # keep only the probe request
+                packet = dot11.RadioTap(row[4])
+                if packet.type != 0 or packet.subtype != 4:
+                    continue
+            if row[2] in ts:
+                ts[row[2]].append(row[0])
+            else:
+                ts[row[2]] = [row[0]]
+            # filter out multicast mac addresses. TODO: use the exact range 00:00:00-7f:ff:ff
+            if row[3] in ts and not row[3].startswith('01:00:5e'):
+                ts[row[3]].append(row[0])
+            else:
+                ts[row[3]] = [row[0]]
+        try:
+            del ts['ff:ff:ff:ff:ff:ff']
+            del ts['00:00:00:00:00:00']
+        except KeyError as k:
+            pass
+        # filter to keep only wifi client and device
+        sql = 'select lower(devmac),type from devices'
+        c.execute(sql)
+        for row in c.fetchall():
+            if row[1] not in ['Wi-Fi Device','Wi-Fi Client']:
+                try:
+                    del ts[row[0]]
+                except KeyError as k:
+                    pass
+        conn.close()
     else:
         # sqlite3
         conn = sqlite3.connect(f'file:{args.db}?mode=ro', uri=True)
@@ -95,6 +145,8 @@ def get_data(args):
         m = '^'+m
         return re.search(m, s) is not None
 
+    if None in ts.keys():
+        del ts[None]
     macs = list(ts.keys())
     if args.mac :
         # keep mac with args.mac as substring
@@ -280,6 +332,8 @@ def main():
     parser.add_argument('-m', '--mac', action='append', help='only display that mac')
     parser.add_argument('-p', '--privacy', action='store_true', default=False, help='merge LAA MAC address')
     parser.add_argument('--pcap', help='pcap file to process instead of the db')
+    parser.add_argument('--kismet', help='kismet db file to process instead of the db')
+    parser.add_argument('--only-pr', default=False, action='store_true', help='when processing pcap file/kismet db, keep only probe requests')
     parser.add_argument('-r', '--rssi', type=int, default=-99, help='minimal value for RSSI')
     parser.add_argument('-s', '--start', help='start timestamp')
     parser.add_argument('--span-time', default='1d', help='span of time (coud be #d or ##h or ###m)')
