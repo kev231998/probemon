@@ -1,9 +1,8 @@
 /archives/
 /src/scripts/*
-/src/shift-time.py
+/src/manuf
 probemon.db
 probemon.db-journal
-/sync.sh
 *.pyc
 *.bak
 node_modules/

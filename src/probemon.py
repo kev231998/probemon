@@ -6,7 +6,7 @@ import argparse
 import subprocess
 import sys
 import sqlite3
-import netaddr
+from manuf import manuf
 import base64
 from lru import LRU
 import atexit
@@ -17,6 +17,7 @@ NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe requests"
 VERSION = '0.6'
 
+MANUF_FILE = './manuf'
 MAX_QUEUE_LENGTH = 50
 MAX_ELAPSED_TIME = 60 # seconds
 MAX_VENDOR_LENGTH = 25
@@ -76,6 +77,7 @@ class MyQueue:
 # globals
 cache = MyCache(128)
 queue = MyQueue(MAX_QUEUE_LENGTH, MAX_ELAPSED_TIME)
+vendor_db = None
 
 def parse_rssi(packet):
     # parse dbm_antsignal from radiotap header
@@ -170,16 +172,9 @@ def build_packet_cb(conn, c, stdout, ignored):
     def packet_callback(packet):
         now = time.time()
         # look up vendor from OUI value in MAC address
-        try:
-            parsed_mac = netaddr.EUI(packet.addr2)
-            vendor = parsed_mac.oui.registration().org
-        except netaddr.core.NotRegisteredError as e:
+        vendor = vendor_db.get_manuf_long(packet.addr2)
+        if vendor is None:
             vendor = 'UNKNOWN'
-        except IndexError as e:
-            vendor = 'UNKNOWN'
-        except UnicodeDecodeError as u:
-            vendor = 'UNKNOWN'
-
         try:
             rssi = packet.dBm_AntSignal
         except AttributeError as a:
@@ -267,6 +262,16 @@ def main(conn, c):
     except subprocess.CalledProcessError as c:
         print(f'Error: failed to switch to channel {args.channel} in interface {args.interface}', file=sys.stderr)
         sys.exit(-1)
+
+    update_vdb = False
+    global vendor_db
+    if not os.path.isfile(MANUF_FILE):
+        update_vdb = True
+    if update_vdb:
+        print('Updating and loading manuf file')
+    else:
+        print('Loading manuf file')
+    vendor_db = manuf.MacParser(manuf_name='./manuf', update=update_vdb)
 
     print(f':: Started listening to probe requests on channel {args.channel} on interface {args.interface}')
     while True:
