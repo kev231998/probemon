@@ -12,7 +12,7 @@ Another tool presents statistics about the mac addresses present in the database
 There is also a **flask app** to serve charts/plots and stats of the sqlite3 db. Use a real webserver like *gunicorn* or whatever you like. Look at [your deployement options](http://flask.pocoo.org/docs/1.0/deploying/#self-hosted-options) to find how to serve the app with a webserver.
 
 The dependencies are:
-* for probemon.py: scapy, python-netaddr, lru-dict
+* for probemon.py: scapy, manuf-ng, lru-dict
 * for stats.py: None
 * for plot.py: matplotlib, cycler
 * for mapot.py: flask, flask-caching
