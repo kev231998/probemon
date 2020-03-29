@@ -15,7 +15,7 @@ import threading
 
 NAME = 'probemon'
 DESCRIPTION = "a command line tool for logging 802.11 probe requests"
-VERSION = '0.7'
+VERSION = '0.7.1'
 
 MANUF_FILE = './manuf'
 MAX_QUEUE_LENGTH = 50
@@ -259,7 +259,7 @@ def main():
     try:
         subprocess.check_call(cmd.split(' '))
     except subprocess.CalledProcessError as c:
-        print(f'Error: failed to switch to channel {args.channel} in interface {args.interface}', file=sys.stderr)
+        print(f'Error: failed to switch to channel {args.channel} for interface {args.interface}', file=sys.stderr)
         sys.exit(-1)
 
     update_vdb = False
@@ -281,10 +281,15 @@ def main():
     try:
         sniff(iface=args.interface, prn=build_packet_cb(config.IGNORED),
             store=0, filter='wlan type mgt subtype probe-req', stop_filter=check_event)
-    except (Scapy_Exception, OSError) as o:
+    except Scapy_Exception as se:
+        print(f'Error: {se}', file=sys.stderr)
+        sys.exit(-1)
+    except OSError as o:
         print(f"Error: {args.interface} interface not found", file=sys.stderr)
-    event.set()
-    pq.join()
+        sys.exit(-1)
+    finally:
+        event.set()
+        pq.join()
 
 if __name__ == '__main__':
     try:
