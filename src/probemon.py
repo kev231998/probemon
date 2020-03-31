@@ -9,7 +9,7 @@ import sqlite3
 from manuf import manuf
 import base64
 from lru import LRU
-import atexit
+import signal
 import struct
 import threading
 
@@ -95,6 +95,9 @@ vendor_db = None
 start_ts = time.monotonic()
 lock = threading.Lock()
 event = threading.Event()
+
+def sig_handler(signum, frame):
+    event.set()
 
 def process_queue(queue, args):
     global start_ts
@@ -303,9 +306,7 @@ if __name__ == '__main__':
         args = parser.parse_args()
 
         if args.version:
-            print(f'{NAME} {VERSION}')
-            print(f'{DESCRIPTION}')
-            print("© 2018-2019 solsTiCe d'Hiver, GPL 3 licensed")
+            print(f"{NAME} {VERSION}\n© 2018-2020 solsTiCe d'Hiver, GPL 3 licensed")
             sys.exit(1)
 
         if not args.interface:
@@ -319,6 +320,9 @@ if __name__ == '__main__':
         print('Loading scapy...')
         from scapy.all import sniff
         from scapy.error import Scapy_Exception
+
+        signal.signal(signal.SIGTERM, sig_handler)
+        signal.signal(signal.SIGQUIT, sig_handler)
 
         main()
     except KeyboardInterrupt as k:
