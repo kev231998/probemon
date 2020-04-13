@@ -62,7 +62,11 @@ def print_fields(fields):
         ssid = ssid.ljust(MAX_SSID_LENGTH)
     fields[2] = vendor
     fields[3] = ssid
-    print('%s\t%s\t%s\t%s\t%d' % tuple(fields))
+    try:
+        print('%s\t%s\t%s\t%s\t%d' % tuple(fields))
+        break
+    except TypeError:
+        print("Empty field error")
 
 class MyQueue:
     def __init__(self):
