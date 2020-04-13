@@ -64,7 +64,6 @@ def print_fields(fields):
     fields[3] = ssid
     try:
         print('%s\t%s\t%s\t%s\t%d' % tuple(fields))
-        break
     except TypeError:
         print("Empty field error")
 
