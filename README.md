@@ -13,6 +13,8 @@ There is also a **flask app** to serve charts/plots and stats of the sqlite3 db.
 
 The dependencies are:
 * for probemon.py: scapy, manuf-ng, lru-dict
+NOTE: Will need to replace regular manuf.py with modified one found in repository due to anti botting measures
+
 * for stats.py: None
 * for plot.py: matplotlib, cycler
 * for mapot.py: flask, flask-caching
