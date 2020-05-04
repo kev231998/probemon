@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+// TODO:
+// Come up with a better name for this.
+package beavertail;
+
+message DatagramPush {
+  string busID                    = 1;
+  uint32 passengerCount           = 2;
+  double passengerCountConfidence = 3;
+  double latitude                 = 4;
+  double longitude                = 5;
+  int64  timestamp                = 6;  // Unix timestamp
+}
+
+message DatagramAck {
+  enum AckType {
+    OK   = 0;
+    BAD  = 1;
+    BUSY = 2;
+  }
+  AckType acknowledgment = 1;
+}
+
+// gRPC defines services in this case PushDatagram.
+service PushDatagram {
+  // In this service we expose an RPC called Push
+  // it takes in an DatagramPush and returns an DatagramAck
+  // dont ask me about the `{}` bc idk :(
+  rpc Push(DatagramPush) returns (DatagramAck) {
+  }
+}
