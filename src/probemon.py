@@ -50,11 +50,9 @@ class MyCache:
         self.vendor = LRU(size)
 
 def print_fields(fields):
-    global Count
-    global arr
+
     if fields[1] not in arr:
         arr.append(fields[1])
-        Count+=1
     if fields[1] in config.KNOWNMAC:
         fields[1] = '%s%s%s%s' % (Colors.bold, Colors.red, fields[1], Colors.endc)
     # convert time to iso
@@ -74,13 +72,13 @@ def print_fields(fields):
     fields[2] = vendor
     fields[3] = ssid
 #        print('%s\t%s\t%s\t%s\t%d' % tuple(fields))
-    print(Count)
+    print(len(arr))
     with grpc.insecure_channel('beavertail.natan.la:3000') as channel:
         stub = datagram_pb2_grpc.PushDatagramStub(channel)
         resp = stub.Push(
                request=datagram_pb2.DatagramPush(
                         busID="Bus 1",
-                        passengerCount = Count,
+                        passengerCount = len(arr),
                         passengerCountConfidence = random.random()*10+85 ,
                         latitude = 37.554947,
                         longitude = -122.271057,
